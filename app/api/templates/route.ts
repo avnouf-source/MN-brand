@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const templates = await prisma.template.findMany({ orderBy: { createdAt: 'desc' } })
   return NextResponse.json(templates)
