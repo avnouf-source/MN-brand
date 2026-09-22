@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+:root {
+  --mn-navy: #0F1729;
+  --mn-navy-light: #1a2640;
+  --mn-gold: #C9A84C;
+  --mn-gold-light: #E8C96A;
+  --mn-gold-pale: #FDF6E3;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Premium custom scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Navy + Gold utility classes */
+.bg-mn-navy { background-color: var(--mn-navy); }
+.bg-mn-navy-light { background-color: var(--mn-navy-light); }
+.bg-mn-gold { background-color: var(--mn-gold); }
+.bg-mn-gold-pale { background-color: var(--mn-gold-pale); }
+.text-mn-navy { color: var(--mn-navy); }
+.text-mn-gold { color: var(--mn-gold); }
+.border-mn-gold { border-color: var(--mn-gold); }
+
+/* Safe area for mobile */
+.safe-area-inset-bottom { padding-bottom: env(safe-area-inset-bottom); }
