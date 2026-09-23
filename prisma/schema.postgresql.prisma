@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  role          String    @default("AGENT")
+  status        String    @default("OFFLINE")
+  department    String?   @default("General")
+  avatar        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  assignedLeads Lead[]       @relation("AgentLeads")
+  sentMessages  Message[]    @relation("SenderMessages")
+  quickReplies  QuickReply[]
+}
+
+model Lead {
+  id                  String        @id @default(cuid())
+  name                String
+  phone               String        @unique
+  email               String?
+  company             String?
+  businessRequirement String?
+  country             String?
+  sourceUrl           String?
+  leadSource          String?       @default("WhatsApp")
+  stage               String        @default("NEW")
+  tag                 String        @default("NONE")
+  conversationStatus  String        @default("OPEN")
+  isArchived          Boolean       @default(false)
+  assignedAgentId     String?
+  assignedAgent       User?         @relation("AgentLeads", fields: [assignedAgentId], references: [id])
+  conversation        Conversation?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  leadId        String    @unique
+  lead          Lead      @relation(fields: [leadId], references: [id])
+  isActive      Boolean   @default(true)
+  lastMessageAt DateTime  @default(now())
+  messages      Message[]
+  createdAt     DateTime  @default(now())
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  body           String
+  mediaUrl       String?
+  direction      String
+  type           String       @default("TEXT")
+  senderType     String       @default("agent")
+  senderId       String?
+  sender         User?        @relation("SenderMessages", fields: [senderId], references: [id])
+  isRead         Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+}
+
+model QuickReply {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  createdBy String?
+  user      User?    @relation(fields: [createdBy], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  name      String
+  body      String
+  category  String   @default("MARKETING")
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BotFlow {
+  id        String   @id @default(cuid())
+  name      String
+  trigger   String
+  steps     String   @default("[]")
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WhatsAppConfig {
+  id                 String   @id @default(cuid())
+  phoneNumberId      String
+  accessToken        String
+  webhookVerifyToken String
+  businessAccountId  String
+  updatedAt          DateTime @updatedAt
+}

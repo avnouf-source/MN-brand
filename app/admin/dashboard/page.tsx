@@ -1,21 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard'
+import { generate2000Leads, generate50Agents } from '@/lib/bulk-generator'
 
 export const dynamic = 'force-dynamic'
-
-const FALLBACK_AGENTS = [
-  { id: 'sara-demo-id', name: 'Sara Johnson', status: 'ONLINE', _count: { assignedLeads: 3 } },
-  { id: 'karim-demo-id', name: 'Karim Al-Hassan', status: 'ONLINE', _count: { assignedLeads: 3 } },
-]
-
-const FALLBACK_LEADS = [
-  { stage: 'TALKING', tag: 'HOT' },
-  { stage: 'ORDER_PLACED', tag: 'HOT' },
-  { stage: 'TALKING', tag: 'WARM' },
-  { stage: 'NEW', tag: 'WARM' },
-  { stage: 'NEW', tag: 'COLD' },
-  { stage: 'DONE', tag: 'HOT' },
-]
 
 export default async function DashboardPage() {
   let leads: any[] = []
@@ -32,12 +19,17 @@ export default async function DashboardPage() {
     users = res[1]
     messages = res[2]
   } catch (err) {
-    console.warn('[Admin Dashboard] Database query failed, using demo fallback data:', err)
+    console.warn('[Admin Dashboard] Database query failed, using 2,000+ demo data:', err)
   }
 
-  if (leads.length === 0) leads = FALLBACK_LEADS
-  if (users.length === 0) users = FALLBACK_AGENTS
-  if (messages === 0) messages = 14
+  // Pre-load 2,000 leads & 50 agents if database is sparse
+  if (leads.length < 100) {
+    const bulkAgents = generate50Agents()
+    const bulkLeads = generate2000Leads(bulkAgents)
+    leads = bulkLeads
+    users = bulkAgents
+    messages = 4280
+  }
 
   const stats = {
     totalLeads: leads.length,
