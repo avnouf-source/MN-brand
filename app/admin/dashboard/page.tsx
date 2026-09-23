@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const [leads, users, messages] = await Promise.all([
     prisma.lead.findMany({ include: { assignedAgent: { select: { name: true } } } }),

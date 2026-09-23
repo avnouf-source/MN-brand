@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { AgentWorkspace } from '@/components/agent/AgentWorkspace'
 
+export const dynamic = 'force-dynamic'
+
 export default async function WorkspacePage() {
   const session = await getServerSession(authOptions)
   if (!session) return null
