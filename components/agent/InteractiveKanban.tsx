@@ -1,7 +1,8 @@
 'use client'
 import { useState } from 'react'
 import { Phone, ArrowRight, ArrowLeft, GripVertical, CheckCircle, Clock, Sparkles } from 'lucide-react'
-import { parsePhone, formatPhoneDisplay, telLink } from '@/lib/countries'
+import { parsePhone, formatPhoneDisplay, telLink, getCountryLocalTime } from '@/lib/countries'
+import { calculatePredictiveScore } from '@/lib/ai-scoring'
 import type { Lead } from './AgentWorkspace'
 
 interface Props {
@@ -106,6 +107,8 @@ export function InteractiveKanban({ leads, onSelect, selectedId, onUpdate }: Pro
               <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
                 {colLeads.map(lead => {
                   const { country } = parsePhone(lead.phone)
+                  const localTime = getCountryLocalTime(country?.code)
+                  const score = calculatePredictiveScore(lead)
                   const tagStyle = TAG_COLORS[lead.tag] || TAG_COLORS.NONE
                   const isSelected = selectedId === lead.id
                   const msgs = lead.conversation?.messages ?? []
@@ -132,6 +135,13 @@ export function InteractiveKanban({ leads, onSelect, selectedId, onUpdate }: Pro
                         </button>
 
                         <div className="flex items-center gap-1">
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[9px] font-bold"
+                            style={{ background: score.bg, color: score.color }}
+                            title={`AI Score: ${score.score}% (${score.label})`}
+                          >
+                            🎯 {score.score}%
+                          </span>
                           {lead.tag !== 'NONE' && (
                             <span
                               className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
@@ -150,13 +160,20 @@ export function InteractiveKanban({ leads, onSelect, selectedId, onUpdate }: Pro
                         </div>
                       </div>
 
-                      {/* Phone & Country */}
+                      {/* Phone & Country & Local Time Sleep status */}
                       <div
                         onClick={() => onSelect(lead)}
-                        className="flex items-center gap-1.5 mt-1 cursor-pointer"
+                        className="flex items-center gap-1.5 mt-1 cursor-pointer flex-wrap"
                       >
                         {country && <span className="text-xs leading-none">{country.flag}</span>}
                         <span className="text-[11px] font-mono text-slate-500">{formatPhoneDisplay(lead.phone)}</span>
+                        <span
+                          className="text-[9px] px-1.5 py-0.2 rounded-full font-medium"
+                          style={{ background: localTime.bg, color: localTime.color }}
+                          title={`${localTime.timezoneName} · ${localTime.status === 'CLIENT_SLEEPING' ? 'Client Sleeping' : 'Business Hours'}`}
+                        >
+                          {localTime.status === 'CLIENT_SLEEPING' ? '🌙' : '🟢'} {localTime.timeString}
+                        </span>
                       </div>
 
                       {/* Company & requirement */}

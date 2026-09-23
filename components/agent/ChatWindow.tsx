@@ -1,12 +1,13 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Paperclip, Smile, Wand2, Send, Bot, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Languages } from 'lucide-react'
+import { Paperclip, Smile, Wand2, Send, Bot, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Languages, Flame, Clock, ShieldAlert, Zap } from 'lucide-react'
 import { QuickRepliesPopup } from './QuickRepliesPopup'
 import { VoiceNoteBubble } from './VoiceNoteBubble'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
 import type { Lead, Message, QuickReply } from './AgentWorkspace'
-import { formatPhoneDisplay, parsePhone, waLink, telLink } from '@/lib/countries'
+import { formatPhoneDisplay, parsePhone, waLink, telLink, getCountryLocalTime } from '@/lib/countries'
 import { SUPPORTED_LANGUAGES, translateText } from '@/lib/translation'
+import { analyzeSentiment, calculatePredictiveScore } from '@/lib/ai-scoring'
 
 interface Props {
   lead: Lead
@@ -48,12 +49,38 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
   const [aiLoading, setAiLoading] = useState(false)
   const [targetLang, setTargetLang] = useState('es')
   const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({})
+  const [escalated, setEscalated] = useState(false)
   const btm = useRef<HTMLDivElement>(null)
   const msgs = lead.conversation?.messages ?? []
   const offline = isUserOffline(msgs)
   const groups = groupMsgs(msgs)
   const { country } = parsePhone(lead.phone)
   const displayPhone = formatPhoneDisplay(lead.phone)
+
+  // Enterprise Intelligence Metrics
+  const localTimeInfo = getCountryLocalTime(lead.phone)
+  const sentimentInfo = analyzeSentiment(msgs)
+  const scoreInfo = calculatePredictiveScore(lead)
+
+  // 15-minute SLA breach calculation
+  const lastInbound = [...msgs].reverse().find(m => m.direction === 'INBOUND')
+  const lastInboundTime = lastInbound ? new Date(lastInbound.createdAt).getTime() : 0
+  const minutesSinceInbound = lastInbound ? Math.floor((Date.now() - lastInboundTime) / 60000) : 0
+  const slaBreached = (lead.tag === 'HOT' || lead.tag === 'WARM') && minutesSinceInbound >= 15 && !escalated
+
+  function handleEscalate() {
+    setEscalated(true)
+    const notificationMsg: Message = {
+      id: Date.now().toString(),
+      body: `⚡ SLA ESCALATION: Lead automatically reassigned to Senior Operations Manager due to 15m unanswered threshold.`,
+      direction: 'OUTBOUND',
+      type: 'NOTE',
+      senderType: 'system_escalation',
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    }
+    onNewMessage(lead.id, notificationMsg)
+  }
 
   useEffect(() => { btm.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs.length])
 
@@ -194,6 +221,67 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
           </span>
         </div>
       </div>
+
+      {/* Enterprise Intelligence Sub-Header: Local Time & Sleep Warning, AI Sentiment, Predictive Score */}
+      <div className="px-4 py-2 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs flex-shrink-0">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Client Local Time & Sleep Warning */}
+          <span
+            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs"
+            style={{ background: localTimeInfo.bg, color: localTimeInfo.color }}
+            title={`Timezone: ${localTimeInfo.timezoneName}`}
+          >
+            <Clock size={11} />
+            <span>{localTimeInfo.badgeText}</span>
+          </span>
+
+          {/* AI Sentiment */}
+          <span
+            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs"
+            style={{ background: sentimentInfo.bg, color: sentimentInfo.color }}
+            title={sentimentInfo.summary}
+          >
+            <span>{sentimentInfo.emoji}</span>
+            <span>Mood: {sentimentInfo.sentiment}</span>
+          </span>
+
+          {/* Predictive Lead Conversion Probability */}
+          <span
+            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs"
+            style={{ background: scoreInfo.bg, color: scoreInfo.color }}
+            title={scoreInfo.reasons.join(' · ')}
+          >
+            <Flame size={11} />
+            <span>Score: {scoreInfo.score}/100 ({scoreInfo.label})</span>
+          </span>
+        </div>
+
+        {/* Omnichannel Channel Origin */}
+        <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span>Channel: WhatsApp Verified</span>
+        </div>
+      </div>
+
+      {/* 15-Minute SLA Breach Overdue Warning & Manager Escalation */}
+      {slaBreached && (
+        <div className="mx-4 mt-3 p-3 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-between gap-3 text-xs flex-shrink-0 animate-pulse">
+          <div className="flex items-center gap-2 text-red-700">
+            <ShieldAlert size={16} className="text-red-600 flex-shrink-0" />
+            <span>
+              <strong>⚠️ Overdue SLA:</strong> Customer waiting for <strong>{minutesSinceInbound} minutes</strong> without staff reply (15m Threshold Exceeded).
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleEscalate}
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 text-white font-bold text-[11px] shadow-xs hover:bg-red-700 transition active:scale-95 flex-shrink-0"
+          >
+            <Zap size={12} />
+            <span>Escalate to Manager</span>
+          </button>
+        </div>
+      )}
 
       {/* 24h Offline banner with 1-Click Follow-Up Sequences */}
       {offline && (

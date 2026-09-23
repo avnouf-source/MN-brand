@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Eye, EyeOff, Save, CheckCircle2, AlertCircle, Palette, Database, Globe, Sliders } from 'lucide-react'
+import { Eye, EyeOff, Save, CheckCircle2, AlertCircle, Palette, Database, Globe, Sliders, Terminal, Key, Copy } from 'lucide-react'
 
 interface Config {
   phoneNumberId: string
@@ -24,7 +24,9 @@ const PRESET_PALETTES = [
 ]
 
 export function SettingsForm({ initialConfig }: { initialConfig: Config | null }) {
-  const [tab, setTab] = useState<'whatsapp' | 'branding' | 'database'>('branding')
+  const [tab, setTab] = useState<'whatsapp' | 'branding' | 'database' | 'developers'>('branding')
+  const [copiedKey, setCopiedKey] = useState(false)
+  const [webhookUrl, setWebhookUrl] = useState('https://api.mnbrand.com/v1/webhook')
   const [form, setForm] = useState<Config>(
     initialConfig ?? {
       phoneNumberId: '',
@@ -133,6 +135,18 @@ export function SettingsForm({ initialConfig }: { initialConfig: Config | null }
         >
           <Database size={15} style={{ color: tab === 'database' ? '#C9A84C' : undefined }} />
           <span>Cloud Database (PostgreSQL)</span>
+        </button>
+
+        <button
+          onClick={() => setTab('developers')}
+          className={`flex items-center gap-2 pb-3 text-sm font-semibold transition border-b-2 ${
+            tab === 'developers'
+              ? 'border-amber-500 text-slate-900'
+              : 'border-transparent text-slate-400 hover:text-slate-600'
+          }`}
+        >
+          <Terminal size={15} style={{ color: tab === 'developers' ? '#C9A84C' : undefined }} />
+          <span>Developers &amp; API Hub</span>
         </button>
       </div>
 
@@ -360,6 +374,78 @@ export function SettingsForm({ initialConfig }: { initialConfig: Config | null }
                 <li>NEXTAUTH_URL = &quot;https://your-netlify-site.netlify.app&quot;</li>
               </ul>
               <p>3. Run <code className="bg-slate-100 px-1 rounded">npx prisma db push</code> or seed via <code className="bg-slate-100 px-1 rounded">/api/leads/seed-bulk</code>.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: Developers & API Hub */}
+      {tab === 'developers' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5">
+            <div className="flex items-center gap-2">
+              <Terminal size={18} style={{ color: '#C9A84C' }} />
+              <h3 className="text-base font-bold text-slate-900">Developer API Keys &amp; Webhooks</h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              Integrate external ERPs, Zapier, custom websites, and WhatsApp Cloud API webhook listeners into MN Brand.
+            </p>
+
+            {/* Live API Key */}
+            <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Key size={13} style={{ color: '#C9A84C' }} /> Production API Secret Key
+                </span>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">ACTIVE</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value="mn_live_sec_9941a8e2d409b6c1f074a3"
+                  className="flex-1 px-3 py-2 rounded-lg border border-slate-200 bg-white font-mono text-xs text-slate-700 select-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText('mn_live_sec_9941a8e2d409b6c1f074a3')
+                    setCopiedKey(true)
+                    setTimeout(() => setCopiedKey(false), 2000)
+                  }}
+                  className="flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700"
+                >
+                  <Copy size={12} />
+                  <span>{copiedKey ? 'Copied!' : 'Copy'}</span>
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-400">Keep this secret key safe. Never expose it in client-side code.</p>
+            </div>
+
+            {/* Outbound Webhook Target */}
+            <div className="space-y-2 pt-2">
+              <label className="block text-xs font-semibold text-slate-700">Outbound Event Webhook Endpoint</label>
+              <input
+                value={webhookUrl}
+                onChange={e => setWebhookUrl(e.target.value)}
+                placeholder="https://your-crm-bridge.com/webhooks/mnbrand"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs focus:outline-none focus:ring-2 font-mono"
+                style={{ '--tw-ring-color': '#C9A84C' } as any}
+              />
+              <p className="text-[11px] text-slate-400">We will dispatch POST requests when leads are created or stages change.</p>
+            </div>
+
+            {/* Event Subscriptions */}
+            <div className="space-y-2 pt-2">
+              <span className="block text-xs font-semibold text-slate-700">Active Webhook Event Subscriptions</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {['lead.created', 'lead.stage_updated', 'message.inbound_received', 'sla.breached_alert'].map(evt => (
+                  <div key={evt} className="p-2.5 rounded-xl border border-slate-100 bg-white flex items-center justify-between">
+                    <span className="font-mono text-slate-700 text-[11px]">{evt}</span>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">ENABLED</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

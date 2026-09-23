@@ -1,7 +1,8 @@
 'use client'
 import { useState, useMemo } from 'react'
 import { Search, Phone, ChevronDown } from 'lucide-react'
-import { formatPhoneDisplay, parsePhone, telLink } from '@/lib/countries'
+import { formatPhoneDisplay, parsePhone, telLink, getCountryLocalTime } from '@/lib/countries'
+import { calculatePredictiveScore } from '@/lib/ai-scoring'
 import type { Lead } from './AgentWorkspace'
 
 interface Props {
@@ -100,6 +101,8 @@ export function KanbanBoard({ leads, filter, onFilterChange, onSelect, selectedI
       <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
         {displayed.map(lead => {
           const { country } = parsePhone(lead.phone)
+          const localTime = getCountryLocalTime(country?.code)
+          const score = calculatePredictiveScore(lead)
           const msgs = lead.conversation?.messages ?? []
           const lastMsg = msgs[msgs.length - 1]
           const unread = msgs.filter(m => !m.isRead && m.direction === 'INBOUND').length
@@ -128,20 +131,36 @@ export function KanbanBoard({ leads, filter, onFilterChange, onSelect, selectedI
                 </div>
 
                 <div className="flex-1 min-w-0 pr-1">
-                  {/* Row 1: Name + time */}
+                  {/* Row 1: Name + score + time */}
                   <div className="flex items-center justify-between gap-1">
                     <span className="text-sm font-semibold text-slate-800 truncate">{lead.name}</span>
-                    {lastMsg && (
-                      <span className="text-[10px] text-slate-400 flex-shrink-0 font-mono">
-                        {new Date(lastMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <span
+                        className="text-[9px] px-1.5 py-0.5 rounded font-bold"
+                        style={{ background: score.bg, color: score.color }}
+                        title={`AI Intent: ${score.label} (${score.score}/100)`}
+                      >
+                        🎯 {score.score}%
                       </span>
-                    )}
+                      {lastMsg && (
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          {new Date(lastMsg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Row 2: Phone with flag */}
-                  <div className="flex items-center gap-1 mt-0.5">
+                  {/* Row 2: Phone with flag + Local Time & Sleep Indicator */}
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                     {country && <span className="text-xs leading-none">{country.flag}</span>}
                     <span className="text-[11px] text-slate-500 font-mono">{formatPhoneDisplay(lead.phone)}</span>
+                    <span
+                      className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
+                      style={{ background: localTime.bg, color: localTime.color }}
+                      title={`${localTime.timezoneName} · ${localTime.status === 'CLIENT_SLEEPING' ? 'Client Sleeping' : 'Business Hours'}`}
+                    >
+                      {localTime.status === 'CLIENT_SLEEPING' ? '🌙' : '🟢'} {localTime.timeString}
+                    </span>
                   </div>
 
                   {/* Row 3: Company + last message preview */}

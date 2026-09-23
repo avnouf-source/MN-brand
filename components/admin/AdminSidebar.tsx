@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Sparkles, Users, Bot, FileText, Settings, MessageCircle } from 'lucide-react'
+import { LayoutDashboard, Sparkles, Users, Bot, FileText, Settings, MessageCircle, ClipboardList, ShieldCheck } from 'lucide-react'
 import { MNLogo } from '@/components/shared/MNLogo'
 
 const NAV = [
@@ -10,6 +10,8 @@ const NAV = [
   { href: '/admin/team', icon: Users, label: 'Team' },
   { href: '/admin/automation', icon: Bot, label: 'Automation' },
   { href: '/admin/templates', icon: FileText, label: 'Templates' },
+  { href: '/admin/logs', icon: ClipboardList, label: 'Activity Logs' },
+  { href: '/admin/security', icon: ShieldCheck, label: 'Security & GDPR' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },
 ]
 

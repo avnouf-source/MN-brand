@@ -6,7 +6,7 @@ import { ChatWindow } from './ChatWindow'
 import { ContextPanel } from './ContextPanel'
 import { PipelineDashboard, getConvStatus } from './PipelineDashboard'
 import { LeadCaptureModal } from './LeadCaptureModal'
-import { Plus, MessageSquare, Info, List, Columns3, LayoutList } from 'lucide-react'
+import { Plus, MessageSquare, Info, List, Columns3, LayoutList, CheckSquare, Target, X, CheckCircle } from 'lucide-react'
 
 export interface Message {
   id: string; body: string; direction: string; type: string
@@ -39,6 +39,14 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
   const [modalPrefillPhone, setModalPrefillPhone] = useState('')
   const [mobile, setMobile] = useState<'leads' | 'chat' | 'details'>('leads')
   const [viewMode, setViewMode] = useState<'split' | 'kanban'>('split')
+  const [channelFilter, setChannelFilter] = useState<'ALL' | 'WHATSAPP' | 'INSTAGRAM' | 'EMAIL'>('ALL')
+  const [showTasksDrawer, setShowTasksDrawer] = useState(false)
+  const [tasks, setTasks] = useState([
+    { id: 't1', title: 'Follow up with 5 HOT priority leads', completed: true },
+    { id: 't2', title: 'Dispatch custom enterprise quote for GCC accounts', completed: true },
+    { id: 't3', title: 'Review 3 dormant chats older than 24 hours', completed: false },
+    { id: 't4', title: 'Complete voice note outreach for European leads', completed: false },
+  ])
 
   useEffect(() => {
     function handleOpenLeadModal(e: any) {
@@ -96,9 +104,16 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
     setMobile('chat')
   }
 
-  const visibleLeads = pipeFilter === 'ALL'
-    ? leads
-    : leads.filter(l => getConvStatus(l) === pipeFilter)
+  const visibleLeads = leads.filter(l => {
+    if (pipeFilter !== 'ALL' && getConvStatus(l) !== pipeFilter) return false
+    if (channelFilter !== 'ALL') {
+      const src = (l.sourceUrl || '').toLowerCase()
+      if (channelFilter === 'WHATSAPP' && (src.includes('instagram') || src.includes('email'))) return false
+      if (channelFilter === 'INSTAGRAM' && !src.includes('instagram')) return false
+      if (channelFilter === 'EMAIL' && !src.includes('email')) return false
+    }
+    return true
+  })
 
   const unread = leads.filter(l => getConvStatus(l) === 'UNREAD').length
 
@@ -131,14 +146,26 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold shadow-xs transition active:scale-95"
-          style={{ background: '#0F1729' }}
-        >
-          <Plus size={12} /> New Lead
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Personal Daily Tasks & Performance Widget Button */}
+          <button
+            type="button"
+            onClick={() => setShowTasksDrawer(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs transition"
+          >
+            <CheckSquare size={13} style={{ color: '#C9A84C' }} />
+            <span>Daily Tasks ({tasks.filter(t => t.completed).length}/{tasks.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold shadow-xs transition active:scale-95"
+            style={{ background: '#0F1729' }}
+          >
+            <Plus size={12} /> New Lead
+          </button>
+        </div>
       </div>
 
       {viewMode === 'kanban' ? (
@@ -161,6 +188,29 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
                 {pipeFilter === 'ALL' ? 'All Leads' : pipeFilter.charAt(0) + pipeFilter.slice(1).toLowerCase()}
                 <span className="ml-1 text-slate-400">({visibleLeads.length})</span>
               </span>
+            </div>
+
+            {/* Omnichannel Channel Filter */}
+            <div className="px-3 py-1.5 border-b border-slate-100 flex items-center gap-1 overflow-x-auto bg-slate-50/50 flex-shrink-0">
+              {[
+                { id: 'ALL', label: 'All Channels', icon: '🌐' },
+                { id: 'WHATSAPP', label: 'WhatsApp', icon: '🟢' },
+                { id: 'INSTAGRAM', label: 'Instagram', icon: '🟣' },
+                { id: 'EMAIL', label: 'Email', icon: '🔵' },
+              ].map(ch => (
+                <button
+                  key={ch.id}
+                  onClick={() => setChannelFilter(ch.id as any)}
+                  className={`px-2 py-0.5 rounded-lg text-[10px] font-semibold transition flex items-center gap-1 whitespace-nowrap ${
+                    channelFilter === ch.id
+                      ? 'bg-slate-900 text-white shadow-2xs'
+                      : 'bg-white text-slate-500 hover:text-slate-800 border border-slate-200'
+                  }`}
+                >
+                  <span>{ch.icon}</span>
+                  <span>{ch.label}</span>
+                </button>
+              ))}
             </div>
             <KanbanBoard leads={visibleLeads} filter={stageFilter} onFilterChange={setStageFilter} onSelect={onSelect} selectedId={selected?.id} onUpdate={onUpdate} />
           </div>
@@ -219,6 +269,106 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
           }}
           onSaved={onLeadSaved}
         />
+      )}
+
+      {/* Slide-Over Drawer: Personal Daily Task List & KPIs */}
+      {showTasksDrawer && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex justify-end">
+          <div className="w-full max-w-md bg-white h-full shadow-2xl p-6 flex flex-col justify-between overflow-y-auto">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white" style={{ background: '#0F1729' }}>
+                    <CheckSquare size={16} style={{ color: '#C9A84C' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Personal Daily Tasks &amp; KPIs</h3>
+                    <p className="text-[11px] text-slate-400">Restricted Agent Workspace Mode</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTasksDrawer(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Personal KPI Widget */}
+              <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Target size={14} style={{ color: '#C9A84C' }} /> My Quota &amp; SLA Performance
+                  </span>
+                  <span className="text-[11px] font-bold text-emerald-600">78% Target Achieved</span>
+                </div>
+                <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '78%' }} />
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-1 text-center">
+                  <div className="bg-white p-2 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-400">Response</p>
+                    <p className="text-sm font-bold text-slate-800">3.2m</p>
+                  </div>
+                  <div className="bg-white p-2 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-400">Calls</p>
+                    <p className="text-sm font-bold text-slate-800">14</p>
+                  </div>
+                  <div className="bg-white p-2 rounded-xl border border-slate-100">
+                    <p className="text-xs text-slate-400">Closed</p>
+                    <p className="text-sm font-bold text-emerald-600">6</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Interactive Daily Task Checklist */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Today&apos;s Action Items</span>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    {tasks.filter(t => t.completed).length} of {tasks.length} Completed
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {tasks.map(t => (
+                    <div
+                      key={t.id}
+                      onClick={() =>
+                        setTasks(prev =>
+                          prev.map(item => (item.id === t.id ? { ...item, completed: !item.completed } : item))
+                        )
+                      }
+                      className={`p-3 rounded-xl border transition flex items-center gap-3 cursor-pointer ${
+                        t.completed ? 'bg-emerald-50/50 border-emerald-200 text-slate-500 line-through' : 'bg-white border-slate-200 hover:border-slate-300 text-slate-800'
+                      }`}
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-md flex items-center justify-center border transition ${
+                          t.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {t.completed && <CheckCircle size={13} />}
+                      </div>
+                      <span className="text-xs font-medium flex-1">{t.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-100 text-center">
+              <button
+                type="button"
+                onClick={() => setShowTasksDrawer(false)}
+                className="w-full py-2.5 rounded-xl text-white text-xs font-semibold"
+                style={{ background: '#0F1729' }}
+              >
+                Close Drawer
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
