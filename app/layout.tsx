@@ -45,6 +45,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 if (mode === 'dark') {
                   document.documentElement.classList.add('dark');
                 }
+                function purgeNetlifyBadge() {
+                  var targets = document.querySelectorAll('#netlify-drawer-container, netlify-drawer, #netlify-badge, .netlify-badge, [data-netlify-badge], iframe[src*="netlify"], a[href*="netlify.com"]');
+                  targets.forEach(function(el) { el.remove(); });
+                }
+                if (typeof window !== 'undefined') {
+                  window.addEventListener('DOMContentLoaded', purgeNetlifyBadge);
+                  window.addEventListener('load', purgeNetlifyBadge);
+                  var observer = new MutationObserver(function() { purgeNetlifyBadge(); });
+                  observer.observe(document.documentElement, { childList: true, subtree: true });
+                }
               } catch(e) {}
             `,
           }}

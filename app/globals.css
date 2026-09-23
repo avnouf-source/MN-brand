@@ -35,3 +35,32 @@ body {
 
 /* Safe area for mobile */
 .safe-area-inset-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+/* Completely hide and remove Netlify floating badge, drawer, or feedback widget */
+#netlify-drawer-container,
+netlify-drawer,
+#netlify-badge,
+.netlify-badge,
+[data-netlify-badge],
+[data-netlify-deploy-id],
+iframe[src*="netlify"],
+iframe[title*="Netlify"],
+iframe#netlify-drawer,
+div#netlify-drawer-container,
+div[class*="netlify-drawer"],
+div[id*="netlify-drawer"],
+a[href*="netlify.com"]:has(img),
+a[href*="netlify.com"][class*="badge"],
+div:has(> a[href*="netlify.com"]) {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  position: absolute !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  z-index: -99999 !important;
+}

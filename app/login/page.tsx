@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Mail, Lock, Globe, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
 import { MNLogo } from '@/components/shared/MNLogo'
 
 export default function LoginPage() {
@@ -154,18 +154,6 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In to MN Brand'}
             </button>
           </form>
-
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 rounded-xl border border-dashed border-slate-200 bg-slate-50">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Globe size={12} className="text-slate-400" />
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Demo Access</p>
-            </div>
-            <div className="space-y-1 text-xs text-slate-500">
-              <p><span className="font-medium text-slate-700">Admin:</span> admin@mnbrand.com · admin123</p>
-              <p><span className="font-medium text-slate-700">Agent:</span> sara@mnbrand.com · agent123</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
