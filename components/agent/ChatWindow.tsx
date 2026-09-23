@@ -1,11 +1,12 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Paperclip, Smile, Wand2, Send, Bot, AlertCircle, Phone, MessageCircle, Mic, Sparkles } from 'lucide-react'
+import { Paperclip, Smile, Wand2, Send, Bot, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Languages } from 'lucide-react'
 import { QuickRepliesPopup } from './QuickRepliesPopup'
 import { VoiceNoteBubble } from './VoiceNoteBubble'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
 import type { Lead, Message, QuickReply } from './AgentWorkspace'
 import { formatPhoneDisplay, parsePhone, waLink, telLink } from '@/lib/countries'
+import { SUPPORTED_LANGUAGES, translateText } from '@/lib/translation'
 
 interface Props {
   lead: Lead
@@ -45,6 +46,8 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
   const [showQR, setShowQR] = useState(false)
   const [isRecordingVoice, setIsRecordingVoice] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
+  const [targetLang, setTargetLang] = useState('es')
+  const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({})
   const btm = useRef<HTMLDivElement>(null)
   const msgs = lead.conversation?.messages ?? []
   const offline = isUserOffline(msgs)
@@ -56,6 +59,27 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
 
   function onInput(v: string) { setInput(v); setShowQR(v.startsWith('/')) }
   function onQR(body: string) { setInput(body); setShowQR(false) }
+
+  function toggleTranslateInbound(msgId: string, text: string) {
+    if (translatedMap[msgId]) {
+      const copy = { ...translatedMap }
+      delete copy[msgId]
+      setTranslatedMap(copy)
+    } else {
+      const tr = translateText(text, targetLang)
+      setTranslatedMap(prev => ({ ...prev, [msgId]: tr }))
+    }
+  }
+
+  function translateDraft() {
+    if (!input.trim()) return
+    const translated = translateText(input, targetLang)
+    setInput(translated)
+  }
+
+  function insertFollowupSequence(template: string) {
+    setInput(template)
+  }
 
   async function send() {
     if (!input.trim() || sending) return
@@ -171,11 +195,38 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
         </div>
       </div>
 
-      {/* 24h Offline banner */}
+      {/* 24h Offline banner with 1-Click Follow-Up Sequences */}
       {offline && (
-        <div className="mx-4 mt-3 flex items-start gap-2.5 p-3 rounded-xl border text-sm flex-shrink-0" style={{ background: '#FDF6E3', borderColor: '#E8D5A0', color: '#8B7A3D' }}>
-          <AlertCircle size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
-          <div><span className="font-medium">User offline for 24+ hours.</span> Use a message template to reach them.</div>
+        <div className="mx-4 mt-3 p-3.5 rounded-2xl border flex-shrink-0 space-y-2" style={{ background: '#FDF6E3', borderColor: '#E8D5A0' }}>
+          <div className="flex items-start gap-2 text-xs" style={{ color: '#8B7A3D' }}>
+            <AlertCircle size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
+            <div>
+              <span className="font-bold">Contact offline for &gt; 24 hours.</span> WhatsApp policy requires an approved template or sequence to re-engage:
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            <button
+              type="button"
+              onClick={() => insertFollowupSequence(`Hi ${lead.name}! 👋 Just checking in to see if you had any questions regarding our proposal for ${lead.company || 'your business'}?`)}
+              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[11px] font-semibold text-amber-900 hover:bg-amber-100/60 transition shadow-2xs active:scale-95"
+            >
+              👋 24h Re-engagement
+            </button>
+            <button
+              type="button"
+              onClick={() => insertFollowupSequence(`Hi ${lead.name}, our directors approved an exclusive 15% VIP incentive for ${lead.company || 'your team'} if we onboard this week! 🎁`)}
+              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[11px] font-semibold text-amber-900 hover:bg-amber-100/60 transition shadow-2xs active:scale-95"
+            >
+              🏷️ 15% VIP Incentive
+            </button>
+            <button
+              type="button"
+              onClick={() => insertFollowupSequence(`Hi ${lead.name}, let's schedule a brief 5-minute call today to address your questions. Are you free this afternoon? 📞`)}
+              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[11px] font-semibold text-amber-900 hover:bg-amber-100/60 transition shadow-2xs active:scale-95"
+            >
+              📅 5-Min Strategy Call
+            </button>
+          </div>
         </div>
       )}
 
@@ -215,7 +266,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
                     <p className="text-[10px] mt-1" style={{ color: '#C9A84C80' }}>{fmtTime(m.createdAt)}</p>
                   </div>
                 ) : (
-                  /* Standard Text Chat Bubble */
+                  /* Standard Text Chat Bubble with Real-Time Translation */
                   <div className="max-w-xs md:max-w-md rounded-2xl px-3.5 py-2.5 shadow-xs" style={{
                     background: m.direction === 'OUTBOUND' ? '#0F1729' : '#fff',
                     color: m.direction === 'OUTBOUND' ? '#fff' : '#334155',
@@ -223,9 +274,32 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
                     borderRadius: m.direction === 'OUTBOUND' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
                   }}>
                     <p className="text-sm leading-relaxed">{m.body}</p>
-                    <p className="text-[10px] mt-1 text-right font-mono" style={{ color: m.direction === 'OUTBOUND' ? 'rgba(255,255,255,0.45)' : '#94a3b8' }}>
-                      {fmtTime(m.createdAt)}
-                    </p>
+
+                    {/* Translated text block */}
+                    {translatedMap[m.id] && (
+                      <div className="mt-1.5 pt-1.5 border-t border-slate-100 text-xs text-amber-800 bg-amber-50/70 p-2 rounded-lg">
+                        <span className="font-bold text-[9px] uppercase tracking-wide block text-amber-700">Translation:</span>
+                        {translatedMap[m.id]}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between gap-3 mt-1.5">
+                      {m.direction === 'INBOUND' ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleTranslateInbound(m.id, m.body)}
+                          className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-amber-700 transition"
+                          title="Translate message"
+                        >
+                          <Languages size={11} style={{ color: '#C9A84C' }} />
+                          <span>{translatedMap[m.id] ? 'Original' : 'Translate'}</span>
+                        </button>
+                      ) : <span />}
+
+                      <p className="text-[10px] font-mono" style={{ color: m.direction === 'OUTBOUND' ? 'rgba(255,255,255,0.45)' : '#94a3b8' }}>
+                        {fmtTime(m.createdAt)}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -261,6 +335,32 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2 resize-none placeholder-slate-400"
                   style={{ '--tw-ring-color': '#C9A84C', minHeight: 42 } as any}
                 />
+              </div>
+
+              {/* Language Selector & Draft Translator */}
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <select
+                  value={targetLang}
+                  onChange={e => setTargetLang(e.target.value)}
+                  className="h-10 px-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
+                  title="Select Target Language"
+                >
+                  {SUPPORTED_LANGUAGES.map(l => (
+                    <option key={l.code} value={l.code}>
+                      {l.flag} {l.name}
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={translateDraft}
+                  disabled={!input.trim()}
+                  className="p-2.5 rounded-xl border border-slate-200 hover:bg-amber-50 text-slate-600 hover:text-amber-700 transition flex-shrink-0 disabled:opacity-30 active:scale-95"
+                  title="Translate Draft to Target Language"
+                >
+                  <Languages size={15} style={{ color: '#C9A84C' }} />
+                </button>
               </div>
 
               {/* Voice Note Mic Button */}

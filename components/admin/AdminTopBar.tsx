@@ -2,6 +2,7 @@
 import { signOut } from 'next-auth/react'
 import { Bell, ChevronDown, LogOut, Shield } from 'lucide-react'
 import { useState } from 'react'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 interface Props { user: { name?: string; email?: string; role?: string } }
 
@@ -14,6 +15,7 @@ export function AdminTopBar({ user }: Props) {
         <span className="text-sm font-semibold text-slate-700">Admin Panel</span>
       </div>
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <button className="relative p-2 rounded-xl hover:bg-slate-50 transition">
           <Bell size={16} className="text-slate-500" />
         </button>

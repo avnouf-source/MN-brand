@@ -1,11 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { KanbanBoard } from './KanbanBoard'
+import { InteractiveKanban } from './InteractiveKanban'
 import { ChatWindow } from './ChatWindow'
 import { ContextPanel } from './ContextPanel'
 import { PipelineDashboard, getConvStatus } from './PipelineDashboard'
 import { LeadCaptureModal } from './LeadCaptureModal'
-import { Plus, MessageSquare, Info, List } from 'lucide-react'
+import { Plus, MessageSquare, Info, List, Columns3, LayoutList } from 'lucide-react'
 
 export interface Message {
   id: string; body: string; direction: string; type: string
@@ -37,6 +38,7 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
   const [showModal, setShowModal] = useState(false)
   const [modalPrefillPhone, setModalPrefillPhone] = useState('')
   const [mobile, setMobile] = useState<'leads' | 'chat' | 'details'>('leads')
+  const [viewMode, setViewMode] = useState<'split' | 'kanban'>('split')
 
   useEffect(() => {
     function handleOpenLeadModal(e: any) {
@@ -104,25 +106,67 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
     <div className="flex flex-col h-full">
       <PipelineDashboard leads={leads} active={pipeFilter} onChange={f => { setPipeFilter(f); setMobile('leads') }} />
 
-      <div className="flex flex-1 min-h-0">
-        {/* Col 1: Leads */}
-        <div className={`flex-col bg-white border-r border-slate-100 lg:flex lg:w-[300px] lg:flex-shrink-0 ${mobile === 'leads' ? 'flex w-full' : 'hidden'} lg:flex`}>
-          <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-              {pipeFilter === 'ALL' ? 'All Leads' : pipeFilter.charAt(0) + pipeFilter.slice(1).toLowerCase()}
-              <span className="ml-1 text-slate-400">({visibleLeads.length})</span>
-            </span>
-            <button onClick={() => setShowModal(true)}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-white text-xs font-semibold shadow-sm transition"
-              style={{ background: '#0F1729' }}>
-              <Plus size={11} /> New Lead
-            </button>
-          </div>
-          <KanbanBoard leads={visibleLeads} filter={stageFilter} onFilterChange={setStageFilter} onSelect={onSelect} selectedId={selected?.id} onUpdate={onUpdate} />
+      {/* View Mode Bar */}
+      <div className="bg-white px-4 py-2 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setViewMode('split')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition ${
+              viewMode === 'split' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <LayoutList size={13} />
+            <span>Chat & Leads</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('kanban')}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition ${
+              viewMode === 'kanban' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            <Columns3 size={13} style={{ color: viewMode === 'kanban' ? '#C9A84C' : undefined }} />
+            <span>Interactive Kanban Pipeline</span>
+          </button>
         </div>
 
-        {/* Col 2: Chat */}
-        <div className={`flex-1 flex-col min-w-0 border-r border-slate-100 lg:flex ${mobile === 'chat' ? 'flex w-full' : 'hidden'} lg:flex`}>
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold shadow-xs transition active:scale-95"
+          style={{ background: '#0F1729' }}
+        >
+          <Plus size={12} /> New Lead
+        </button>
+      </div>
+
+      {viewMode === 'kanban' ? (
+        <InteractiveKanban
+          leads={visibleLeads}
+          onSelect={lead => {
+            setSelected(lead)
+            setViewMode('split')
+            setMobile('chat')
+          }}
+          selectedId={selected?.id}
+          onUpdate={onUpdate}
+        />
+      ) : (
+        <div className="flex flex-1 min-h-0">
+          {/* Col 1: Leads */}
+          <div className={`flex-col bg-white border-r border-slate-100 lg:flex lg:w-[300px] lg:flex-shrink-0 ${mobile === 'leads' ? 'flex w-full' : 'hidden'} lg:flex`}>
+            <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                {pipeFilter === 'ALL' ? 'All Leads' : pipeFilter.charAt(0) + pipeFilter.slice(1).toLowerCase()}
+                <span className="ml-1 text-slate-400">({visibleLeads.length})</span>
+              </span>
+            </div>
+            <KanbanBoard leads={visibleLeads} filter={stageFilter} onFilterChange={setStageFilter} onSelect={onSelect} selectedId={selected?.id} onUpdate={onUpdate} />
+          </div>
+
+          {/* Col 2: Chat */}
+          <div className={`flex-1 flex-col min-w-0 border-r border-slate-100 lg:flex ${mobile === 'chat' ? 'flex w-full' : 'hidden'} lg:flex`}>
           {selected ? (
             <ChatWindow lead={selected} quickReplies={quickReplies} onNewMessage={onNewMessage} />
           ) : (
@@ -137,15 +181,16 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
           )}
         </div>
 
-        {/* Col 3: Context */}
-        <div className={`flex-col bg-white lg:w-[280px] lg:flex-shrink-0 lg:flex ${mobile === 'details' ? 'flex w-full' : 'hidden'} lg:flex`}>
-          {selected ? (
-            <ContextPanel lead={selected} agents={agents} onUpdate={onUpdate} currentUserId={currentUserId} />
-          ) : (
-            <div className="flex-1 flex items-center justify-center"><p className="text-sm text-slate-400">No lead selected</p></div>
-          )}
+          {/* Col 3: Context */}
+          <div className={`flex-col bg-white lg:w-[280px] lg:flex-shrink-0 lg:flex ${mobile === 'details' ? 'flex w-full' : 'hidden'} lg:flex`}>
+            {selected ? (
+              <ContextPanel lead={selected} agents={agents} onUpdate={onUpdate} currentUserId={currentUserId} />
+            ) : (
+              <div className="flex-1 flex items-center justify-center"><p className="text-sm text-slate-400">No lead selected</p></div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Mobile bottom nav */}
       <div className="lg:hidden flex bg-white border-t border-slate-100 safe-area-inset-bottom flex-shrink-0">

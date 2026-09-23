@@ -31,6 +31,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('mn_brand_theme');
+                if (theme) {
+                  var p = JSON.parse(theme);
+                  if (p.primaryColor) document.documentElement.style.setProperty('--mn-navy', p.primaryColor);
+                  if (p.accentColor) document.documentElement.style.setProperty('--mn-gold', p.accentColor);
+                }
+                var mode = localStorage.getItem('mn_theme_mode');
+                if (mode === 'dark') {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch(e) {}
+            `,
+          }}
+        />
       </head>
       <body className="font-sans antialiased bg-slate-50 selection:bg-[#C9A84C] selection:text-white">
         <Providers>{children}</Providers>

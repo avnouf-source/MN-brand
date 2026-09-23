@@ -5,6 +5,7 @@ import { Bell, ChevronDown, LogOut, Shield, Globe, PhoneCall } from 'lucide-reac
 import Link from 'next/link'
 import { MNWordmark } from '@/components/shared/MNLogo'
 import { GlobalDialerModal } from '@/components/agent/GlobalDialerModal'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
 interface Props { user: { name?: string; email?: string; role?: string } }
 
@@ -59,6 +60,9 @@ export function AgentTopBar({ user }: Props) {
             <span className="w-2 h-2 rounded-full" style={{ background: online ? '#10b981' : '#94a3b8' }} />
             <span className="hidden xs:inline">{online ? 'Online' : 'Offline'}</span>
           </button>
+
+          {/* Theme Toggle (Dark / Light) */}
+          <ThemeToggle />
 
           {/* Notification bell */}
           <button className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-500">

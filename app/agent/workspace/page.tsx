@@ -52,7 +52,20 @@ export default async function WorkspacePage() {
   if (leads.length < 10) {
     const bulkAgents = generate50Agents()
     const bulkLeads = generate2000Leads(bulkAgents)
-    leads = bulkLeads
+    if (!isAdmin) {
+      // Strict RBAC: Staff members ONLY see their assigned leads (40 leads per staff member)
+      const userLeads = bulkLeads.filter(l => l.assignedAgentId === userId)
+      leads = userLeads.length > 0
+        ? userLeads
+        : bulkLeads.slice(0, 40).map(l => ({
+            ...l,
+            assignedAgentId: userId,
+            assignedAgent: { id: userId, name: (session.user as any)?.name || 'Staff' }
+          }))
+    } else {
+      // Super Admin sees all 2,000+ leads across all 50 staff members
+      leads = bulkLeads
+    }
     agents = bulkAgents.map(a => ({ id: a.id, name: a.name, status: a.status }))
   }
 
