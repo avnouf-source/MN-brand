@@ -2,8 +2,8 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react'
-import { MNLogo } from '@/components/shared/MNLogo'
+import { Loader2, Mail, Lock, Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react'
+import { BPerfumeLogo, BPerfumeWordmark } from '@/components/shared/BPerfumeLogo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,139 +21,186 @@ export default function LoginPage() {
     if (result?.ok) {
       router.push('/')
     } else {
-      setError('Invalid email or password. Please try again.')
+      setError('Invalid luxury clienteling credentials. Please check your email and password.')
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#FAFAFA' }}>
-      {/* Left — Branding Panel */}
+    <div className="min-h-screen flex" style={{ background: '#FBF9F5' }}>
+      {/* Left — High-End Haute Parfumerie Editorial Panel */}
       <div
-        className="hidden lg:flex flex-col justify-between w-[420px] flex-shrink-0 p-10"
-        style={{ background: '#0F1729' }}
+        className="hidden lg:flex flex-col justify-between w-[460px] flex-shrink-0 p-12 relative overflow-hidden"
+        style={{ background: '#0A0F1D' }}
       >
-        {/* Logo */}
-        <div>
-          <div className="flex items-center gap-3 mb-16">
-            <MNLogo size="lg" variant="dark" />
+        {/* Subtle Luxury Gold Background Glow */}
+        <div
+          className="absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-20"
+          style={{ background: '#C9A84C' }}
+        />
+        <div
+          className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-10"
+          style={{ background: '#C9A84C' }}
+        />
+
+        {/* Brand Crest & Monogram */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3.5 mb-14">
+            <BPerfumeLogo size="lg" variant="dark" />
             <div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-extrabold text-white tracking-tight">MN</span>
-                <span className="text-2xl font-extrabold tracking-tight" style={{ color: '#C9A84C' }}>Brand</span>
+                <span className="text-2xl font-bold text-white tracking-widest font-serif">B PERFUME</span>
               </div>
-              <p className="text-xs font-semibold tracking-widest uppercase opacity-60 text-white mt-0.5">Global CRM</p>
+              <p className="text-[9px] font-semibold tracking-[0.25em] uppercase text-amber-300/80 mt-0.5">
+                Haute Parfumerie · Paris &amp; Dubai
+              </p>
             </div>
           </div>
 
-          {/* Headline */}
-          <h1 className="text-3xl font-bold text-white leading-tight mb-4">
-            International<br />
-            <span style={{ color: '#C9A84C' }}>Lead Generation</span><br />
-            Platform
-          </h1>
-          <p className="text-white/60 text-sm leading-relaxed">
-            A VIP-grade WhatsApp CRM built for global teams. Manage leads from any country, communicate via WhatsApp, and close deals faster.
-          </p>
+          {/* Editorial Headline */}
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border"
+              style={{ background: 'rgba(201,168,76,0.12)', borderColor: 'rgba(201,168,76,0.35)', color: '#E8D5A0' }}>
+              <Sparkles size={11} style={{ color: '#C9A84C' }} />
+              <span>International Luxury Clienteling</span>
+            </div>
+
+            <h1 className="text-3xl font-serif font-medium text-white leading-tight">
+              Crafting Timeless<br />
+              <span style={{ color: '#C9A84C' }}>Olfactory Journeys</span><br />
+              Across the Globe.
+            </h1>
+
+            <p className="text-white/60 text-sm leading-relaxed font-light">
+              The exclusive client communication suite for B Perfume advisors. Managing bespoke consultations, 12-hour Extrait orders, and VIP clienteling across India and international markets.
+            </p>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* Perfume Signature Stats */}
+        <div className="grid grid-cols-2 gap-3.5 relative z-10 my-8">
           {[
-            { label: 'Countries', value: '40+' },
-            { label: 'WhatsApp API', value: 'Live' },
-            { label: 'Pipeline Stages', value: '4' },
-            { label: 'Response Time', value: '< 5s' },
+            { label: 'Signature Extrait', value: 'CITYMAN', sub: '12h Long-Lasting' },
+            { label: 'Client Portfolio', value: '5,000+', sub: 'Indian High-Net-Worth' },
+            { label: 'Luxury Advisors', value: '8 Agents', sub: 'Dedicated Curation' },
+            { label: 'Client Concierge', value: '24/7 VIP', sub: 'WhatsApp First' },
           ].map(s => (
-            <div key={s.label} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,168,76,0.2)' }}>
-              <p className="text-2xl font-bold" style={{ color: '#C9A84C' }}>{s.value}</p>
-              <p className="text-xs text-white/50 mt-0.5">{s.label}</p>
+            <div
+              key={s.label}
+              className="rounded-2xl p-3.5 transition backdrop-blur-md"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(201,168,76,0.22)',
+              }}
+            >
+              <p className="text-xs font-semibold text-white/50">{s.label}</p>
+              <p className="text-lg font-bold mt-0.5 font-serif" style={{ color: '#C9A84C' }}>{s.value}</p>
+              <p className="text-[10px] text-white/40 mt-0.5">{s.sub}</p>
             </div>
           ))}
         </div>
 
-        <p className="text-white/30 text-xs">© 2025 MN Brand · All rights reserved</p>
+        {/* Footer */}
+        <div className="relative z-10 flex items-center justify-between text-xs text-white/30 pt-4 border-t border-white/10 font-light">
+          <span>© 2025 B Perfume International</span>
+          <span className="flex items-center gap-1"><ShieldCheck size={12} style={{ color: '#C9A84C' }} /> Encrypted CRM</span>
+        </div>
       </div>
 
-      {/* Right — Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <MNLogo size="md" variant="dark" />
+      {/* Right — Refined Minimalist Login Form */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Mobile Brand Crest */}
+          <div className="lg:hidden flex flex-col items-center text-center gap-2 mb-6">
+            <BPerfumeLogo size="lg" variant="light" />
             <div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-xl font-extrabold text-slate-800">MN</span>
-                <span className="text-xl font-extrabold" style={{ color: '#C9A84C' }}>Brand</span>
-              </div>
-              <p className="text-[9px] font-semibold tracking-widest uppercase text-slate-400 mt-0.5">Global CRM</p>
+              <h2 className="text-2xl font-serif font-bold text-slate-900 tracking-wider">B PERFUME</h2>
+              <p className="text-[10px] font-semibold tracking-widest uppercase text-amber-700 mt-0.5">
+                Haute Parfumerie Clienteling
+              </p>
             </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-slate-900">Welcome back</h2>
-            <p className="text-slate-500 text-sm mt-1">Sign in to your MN Brand workspace</p>
+          {/* Form Header */}
+          <div className="space-y-1 text-center lg:text-left">
+            <h2 className="text-2xl font-serif font-semibold text-slate-900 tracking-tight">Advisor Sign In</h2>
+            <p className="text-slate-500 text-xs">Access your personalized luxury consultation workspace</p>
           </div>
 
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
-              {error}
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Official Email</label>
               <div className="relative">
                 <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="you@mnbrand.com"
+                  placeholder="name@bperfume.com"
                   required
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:border-transparent placeholder-slate-400"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 transition bg-white shadow-2xs"
                   style={{ '--tw-ring-color': '#C9A84C' } as any}
-                  onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #C9A84C40'; e.target.style.borderColor = '#C9A84C' }}
-                  onBlur={e => { e.target.style.boxShadow = ''; e.target.style.borderColor = '#e2e8f0' }}
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Security Password</label>
               <div className="relative">
                 <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type={showPw ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="••••••••••••"
                   required
-                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none placeholder-slate-400"
-                  onFocus={e => { e.target.style.boxShadow = '0 0 0 2px #C9A84C40'; e.target.style.borderColor = '#C9A84C' }}
-                  onBlur={e => { e.target.style.boxShadow = ''; e.target.style.borderColor = '#e2e8f0' }}
+                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 transition bg-white shadow-2xs"
+                  style={{ '--tw-ring-color': '#C9A84C' } as any}
                 />
-                <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                <button
+                  type="button"
+                  onClick={() => setShowPw(!showPw)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
             </div>
 
-            {/* Sign In Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition shadow-sm mt-2"
-              style={{ background: loading ? '#a08030' : '#0F1729' }}
+              className="w-full py-3 rounded-xl text-white text-xs font-semibold tracking-wider uppercase transition shadow-md flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, #0A0F1D 0%, #161F36 100%)',
+                border: '1px solid rgba(201,168,76,0.3)',
+              }}
             >
-              {loading ? <Loader2 size={15} className="animate-spin" /> : null}
-              {loading ? 'Signing in...' : 'Sign In to MN Brand'}
+              {loading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin text-amber-400" />
+                  <span>Authenticating Advisor...</span>
+                </>
+              ) : (
+                <span>Open Luxury Workspace</span>
+              )}
             </button>
           </form>
+
+          {/* Security Note */}
+          <div className="pt-2 text-center">
+            <p className="text-[11px] text-slate-400 font-light flex items-center justify-center gap-1">
+              <ShieldCheck size={12} className="text-amber-600" />
+              <span>Restricted to Authorized B Perfume Staff</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>

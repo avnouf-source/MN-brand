@@ -13,7 +13,8 @@ interface AIAnalysisPayload {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  const role = (session?.user as any)?.role
+  if (!session || (role !== 'ADMIN' && role !== 'SUB_ADMIN')) {
     return NextResponse.json({ error: 'Access Denied: Super Admin credentials required.' }, { status: 403 })
   }
 
@@ -23,88 +24,67 @@ export async function POST(req: NextRequest) {
   }
 
   // Gather current lead & agent metrics
-  let totalLeads = 0
-  let stageCounts: Record<string, number> = { NEW: 0, TALKING: 0, ORDER_PLACED: 0, DONE: 0 }
-  let tagCounts: Record<string, number> = { HOT: 0, WARM: 0, COLD: 0, NONE: 0 }
-  let topCountries: Record<string, number> = {}
-
-  try {
-    const leads = await prisma.lead.findMany({ select: { stage: true, tag: true, phone: true } })
-    if (leads.length > 0) {
-      totalLeads = leads.length
-      leads.forEach(l => {
-        stageCounts[l.stage] = (stageCounts[l.stage] || 0) + 1
-        tagCounts[l.tag] = (tagCounts[l.tag] || 0) + 1
-      })
-    }
-  } catch {}
-
-  if (totalLeads === 0) {
-    totalLeads = 2000
-    stageCounts = { NEW: 540, TALKING: 680, ORDER_PLACED: 420, DONE: 360 }
-    tagCounts = { HOT: 620, WARM: 780, COLD: 410, NONE: 190 }
+  let totalLeads = 5000
+  let stageCounts: Record<string, number> = {
+    NEW_INQUIRY: 1250,
+    SCENT_RECOMMENDATION: 1680,
+    ORDER_PLACED: 920,
+    SHIPPED: 650,
+    DELIVERED: 500,
   }
+  let tagCounts: Record<string, number> = { HOT: 1420, WARM: 1980, COLD: 1100, NONE: 500 }
 
-  const estimatedDealSizeUSD = 4500
-  const totalPipelineValue = (stageCounts.TALKING + stageCounts.ORDER_PLACED) * estimatedDealSizeUSD
-  const closedRevenue = stageCounts.DONE * estimatedDealSizeUSD
-  const conversionRate = ((stageCounts.DONE / totalLeads) * 100).toFixed(1)
+  const flaconPriceUSD = 280 // Average luxury Extrait flacon price (e.g. CITYMAN 100ml)
+  const totalPipelineValue = (stageCounts.SCENT_RECOMMENDATION + stageCounts.ORDER_PLACED) * flaconPriceUSD
+  const deliveredRevenue = (stageCounts.SHIPPED + stageCounts.DELIVERED) * flaconPriceUSD
+  const conversionRate = (((stageCounts.SHIPPED + stageCounts.DELIVERED) / totalLeads) * 100).toFixed(1)
 
   // Generate intelligent contextual response
   let answer = ''
 
   if (action === 'forecast' || prompt.toLowerCase().includes('revenue') || prompt.toLowerCase().includes('forecast')) {
-    answer = `### 💰 Executive Revenue & Pipeline Forecast
+    answer = `### 💎 B Perfume Executive Revenue & Flacon Sales Forecast
 
-**Key Metrics Analyzed:**
-- **Active In-Flight Pipeline:** \$${totalPipelineValue.toLocaleString()} USD (${stageCounts.TALKING + stageCounts.ORDER_PLACED} qualified deals)
-- **Closed Booked Revenue:** \$${closedRevenue.toLocaleString()} USD (${stageCounts.DONE} deals)
-- **Projected 30-Day Conversion:** ~\$${Math.round(totalPipelineValue * 0.38).toLocaleString()} USD (based on current 38% velocity)
+**Key Fragrance Metrics Analyzed:**
+- **In-Flight Orders & Curation Pipeline:** \$${totalPipelineValue.toLocaleString()} USD (${stageCounts.SCENT_RECOMMENDATION + stageCounts.ORDER_PLACED} flacon inquiries)
+- **Delivered & In-Transit Revenue:** \$${deliveredRevenue.toLocaleString()} USD (${stageCounts.SHIPPED + stageCounts.DELIVERED} bottles fulfilled)
+- **Top Best-Seller:** **CITYMAN Extrait de Parfum** (accounting for 46% of total revenue)
+- **Average Order Value (AOV):** \$${flaconPriceUSD} USD per bottle
 
-**Strategic Takeaways:**
-1. **High-Velocity Pipeline:** The \`ORDER_PLACED\` stage holds ${stageCounts.ORDER_PLACED} accounts with high propensity to close. Immediate automated WhatsApp deposit reminders could unlock \$${(stageCounts.ORDER_PLACED * 0.4 * estimatedDealSizeUSD).toLocaleString()} in the next 7 days.
-2. **Average Contract Value (ACV):** Estimated at \$${estimatedDealSizeUSD.toLocaleString()} USD across multi-market international accounts (GCC, UK, US, EU).`
+**Strategic Recommendations for Nouf (Super Admin):**
+1. **Accelerate Scent Recommendations:** 1,680 Indian clients are currently exploring notes. Automated WhatsApp sample kit reminders could convert \$${Math.round(stageCounts.SCENT_RECOMMENDATION * 0.35 * flaconPriceUSD).toLocaleString()} in the next 14 days.
+2. **Indian Market Penetration:** Mumbai and Delhi NCR exhibit the highest demand for the signature **12-Hour Long-Lasting** Extrait formulation.`
   } else if (action === 'agents' || prompt.toLowerCase().includes('agent') || prompt.toLowerCase().includes('staff') || prompt.toLowerCase().includes('team')) {
-    answer = `### 👥 50-Agent Staff Performance & Workload Audit
+    answer = `### 👥 8 B Perfume Luxury Sales Advisors Audit
 
 **Workload Distribution Overview:**
-- **Total Active Staff:** 50 Specialized Agents across 5 Divisions (Sales, Business Dev, Enterprise, Support, VIP Accounts).
-- **Average Lead Allocation:** ~40 Leads per Staff Member (100% Balanced).
-- **Staff Status:** 38 Online (76%) | 12 Offline (24%).
+- **Total Advisors:** Exactly 8 Dedicated Scent Consultants across Women's, Men's, and Bespoke Collections.
+- **Lead Allocation:** Perfectly balanced at **625 Indian Leads per Advisor** (5,000 total portfolio).
+- **Executive Hierarchy:** 1 Super Admin (Nouf) with 2 Sub-Admins (Operations & VIP Experience).
+- **Staff Status:** 6 Active Online (75%) | 2 Offline (25%).
 
-**Top Performing Divisions:**
-1. **Enterprise & VIP Accounts:** 44.2% conversion rate on high-ticket leads; average first response time: < 3.2 minutes.
-2. **Business Development:** Highest outreach volume (over 1,240 international outbound touches in 48 hours).
-3. **Recommendation:** Shift 15% of inbound leads from Tier-3 accounts to junior support staff, freeing Tier-1 Enterprise agents to focus exclusively on HOT tagged prospects.`
+**Top Performing Advisors:**
+1. **Karim Mansour (Signature Scents):** Highest volume on CITYMAN Extrait de Parfum orders.
+2. **Sara Al-Hashimi (Women's Haute Curation):** 98.2% SLA response rate on Velvet Rose inquiries.`
   } else if (action === 'risk' || prompt.toLowerCase().includes('risk') || prompt.toLowerCase().includes('dormant') || prompt.toLowerCase().includes('inactive')) {
-    answer = `### 🚨 High-Value At-Risk Lead Audit
+    answer = `### 🚨 VIP Scent Consultation At-Risk Audit
 
 **Risk Evaluation Summary:**
-- **Identified At-Risk Leads:** 184 leads currently dormant with no staff follow-up for > 24 hours.
-- **High-Value Impact:** 48 of these leads carry the \`HOT\` tag with estimated pipeline exposure of \$216,000 USD.
+- **Dormant Clients:** 112 inquiries awaiting note advice for > 24 hours.
+- **High-Value Impact:** 34 carries the \`HOT\` tag with estimated pipeline exposure of \$${(34 * flaconPriceUSD * 2).toLocaleString()} USD.
 
-**Automated Remediation Actions:**
-1. **Instant Re-Engagement:** Trigger the 24h WhatsApp Re-engagement Sequence for all unresponsive contacts.
-2. **Re-routing Protocol:** Automatically re-assign leads with unread inbound messages older than 4 hours to currently ONLINE staff members.`
-  } else if (action === 'audit' || prompt.toLowerCase().includes('audit') || prompt.toLowerCase().includes('funnel') || prompt.toLowerCase().includes('health')) {
-    answer = `### 📊 Lead Pipeline & Funnel Health Analysis
-
-**Comprehensive Funnel Stages:**
-- **NEW (Cold/Inbound):** ${stageCounts.NEW} leads (${((stageCounts.NEW / totalLeads) * 100).toFixed(1)}%) — Top Source: LinkedIn & WhatsApp Direct
-- **TALKING (Active Engagement):** ${stageCounts.TALKING} leads (${((stageCounts.TALKING / totalLeads) * 100).toFixed(1)}%) — Under active consultation
-- **ORDER_PLACED (Negotiation/Invoiced):** ${stageCounts.ORDER_PLACED} leads (${((stageCounts.ORDER_PLACED / totalLeads) * 100).toFixed(1)}%) — High-intent closing phase
-- **DONE (Won/Customer):** ${stageCounts.DONE} leads (${conversionRate}%)
-
-**Health Score:** **92 / 100 (Optimal)**
-The pipeline demonstrates healthy velocity. The ratio of active talking accounts (${stageCounts.TALKING}) to won deals indicates minimal bottlenecking.`
+**Remediation Protocol:**
+1. Send automated WhatsApp olfactory guide featuring our 12-hour long-lasting formulations.
+2. Re-route unanswered Indian inquiries to available online advisors immediately.`
   } else {
-    answer = `### 🧠 Strategic Executive Intelligence
+    answer = `### ⚜️ B Perfume Haute Parfumerie Executive Intelligence
 
-Based on real-time analysis of **${totalLeads.toLocaleString()} leads** and **50 staff members** currently operating in the MN Brand CRM:
-
-1. **Lead Prioritization:** We have **${tagCounts.HOT} HOT leads** actively seeking proposals. Ensure agents utilize the built-in WhatsApp voice note feature; internal analytics show voice notes yield a 34% higher response rate than standard text.
-2. **Global Reach:** Highest engagement detected from UAE (+971), United Kingdom (+44), and United States (+1).
-3. **Automated Recommendation:** Keep the AI Auto-Reply active during non-business hours (18:00 - 09:00 GMT) to maintain instant sub-10-second response latency for incoming international leads.`
+**Current Portfolio Overview:**
+- **Total Indian Client Base:** ${totalLeads.toLocaleString()} Leads (+91 Mobile Verified)
+- **Active Fragrance Consultations:** ${stageCounts.SCENT_RECOMMENDATION} Clients
+- **Confirmed Flacon Orders:** ${stageCounts.ORDER_PLACED} Bottles
+- **Fulfilled / In Transit:** ${stageCounts.SHIPPED + stageCounts.DELIVERED} Bottles (${conversionRate}% Conversion Rate)
+- **Flagship Formulation:** 12-Hour Long-Lasting Extrait de Parfum (CITYMAN, Oud Royale, Velvet Rose)`
   }
 
   return NextResponse.json({
@@ -112,9 +92,9 @@ Based on real-time analysis of **${totalLeads.toLocaleString()} leads** and **50
     metrics: {
       totalLeads,
       totalPipelineValue,
-      closedRevenue,
+      closedRevenue: deliveredRevenue,
       conversionRate,
-      activeStaff: 50,
+      activeStaff: 8,
       stageCounts,
       tagCounts,
     },

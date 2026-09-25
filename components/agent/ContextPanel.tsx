@@ -19,10 +19,11 @@ const TAG_OPTS = [
 ]
 
 const STAGE_OPTS = [
-  { value: 'NEW', label: 'New' },
-  { value: 'TALKING', label: 'Talking' },
-  { value: 'ORDER_PLACED', label: 'Order Placed' },
-  { value: 'DONE', label: 'Mark as Done ✓' },
+  { value: 'NEW_INQUIRY', label: '1. New Inquiry' },
+  { value: 'SCENT_RECOMMENDATION', label: '2. Scent Recommendation' },
+  { value: 'ORDER_PLACED', label: '3. Order Placed' },
+  { value: 'SHIPPED', label: '4. Shipped' },
+  { value: 'DELIVERED', label: '5. Delivered ✓' },
 ]
 
 const STATUS_OPTS = [
@@ -128,8 +129,11 @@ export function ContextPanel({ lead, agents, onUpdate, currentUserId }: Props) {
       {/* Stage */}
       <div className="p-4 border-b border-slate-100">
         <div className="flex items-center gap-2 mb-2.5"><CheckCircle size={13} className="text-slate-400" /><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Stage</p></div>
-        <select value={lead.stage} onChange={e => handleStage(e.target.value)}
-          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 bg-white">
+        <select
+          value={lead.stage === 'NEW' ? 'NEW_INQUIRY' : lead.stage === 'TALKING' ? 'SCENT_RECOMMENDATION' : lead.stage === 'DONE' ? 'DELIVERED' : lead.stage}
+          onChange={e => handleStage(e.target.value)}
+          className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 bg-white"
+        >
           {STAGE_OPTS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
       </div>

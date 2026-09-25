@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { Plus, Search, Pencil, Trash2, Key, Loader2, Zap, Users, CheckCircle2, Download } from 'lucide-react'
-import { generate50Agents } from '@/lib/bulk-generator'
+import { Plus, Search, Pencil, Trash2, Key, Loader2, Zap, Users, CheckCircle2, Download, Crown, Shield, Sparkles } from 'lucide-react'
+import { generate8PerfumeAgents } from '@/lib/bulk-generator'
 
 interface Agent {
   id: string
@@ -14,9 +14,8 @@ interface Agent {
 
 export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
   const [agents, setAgents] = useState<Agent[]>(() => {
-    if (initialAgents.length < 5) {
-      // Pre-seed up to 50 agents
-      return generate50Agents()
+    if (initialAgents.length === 0 || initialAgents.length > 10) {
+      return generate8PerfumeAgents()
     }
     return initialAgents
   })
@@ -29,7 +28,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
   const [form, setForm] = useState({ name: '', email: '', department: '', password: '' })
   const [newPw, setNewPw] = useState('')
   const [page, setPage] = useState(1)
-  const pageSize = 15
+  const pageSize = 10
 
   const filtered = agents.filter(
     a => a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -46,24 +45,25 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
     try {
       const res = await fetch('/api/agents/distribute', { method: 'POST' })
       const data = await res.json()
-      // Update local state to reflect equal distribution (~40 leads/agent)
+      // Update local state to reflect equal distribution (625 leads/agent for 5000 leads)
+      const perAgent = Math.round(5000 / (agents.length || 8))
       setAgents(prev => prev.map(a => ({
         ...a,
-        _count: { assignedLeads: Math.round(2000 / (prev.length || 50)) }
+        _count: { assignedLeads: perAgent }
       })))
-      setDistributeMsg(data.message || `Equally distributed 2,000+ leads across ${agents.length} staff members (~40 leads/staff).`)
+      setDistributeMsg(data.message || `Equally distributed 5,000 Indian leads across ${agents.length} sales advisors (${perAgent} leads each).`)
       setTimeout(() => setDistributeMsg(''), 6000)
     } catch {
-      setDistributeMsg('Distributed 2,000 leads across staff members.')
+      setDistributeMsg('Distributed 5,000 leads across sales advisors.')
     } finally {
       setDistributing(false)
     }
   }
 
-  function handleLoad50Staff() {
-    const list = generate50Agents()
+  function handleReset8Advisors() {
+    const list = generate8PerfumeAgents()
     setAgents(list)
-    setDistributeMsg('Loaded 50 international staff members across Sales, Enterprise & Support.')
+    setDistributeMsg('Reset roster to the 8 official B Perfume sales advisors.')
     setTimeout(() => setDistributeMsg(''), 5000)
   }
 
@@ -153,9 +153,9 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
       {/* Top Banner & Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-slate-900 tracking-tight">Staff Management</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Managing <span className="font-semibold text-slate-800">{agents.length} active staff members</span> across global departments
+          <h1 className="text-xl font-serif font-bold text-slate-900 tracking-tight">B Perfume Team Hierarchy</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Super Admin Nouf, 2 Sub-Admins, and <span className="font-semibold text-slate-800">{agents.length} Luxury Sales Advisors</span>
           </p>
         </div>
 
@@ -163,46 +163,113 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
           {/* Export Team CSV */}
           <button
             onClick={exportTeamCSV}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition shadow-2xs"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition shadow-2xs cursor-pointer"
             title="Export team performance audit as CSV"
           >
             <Download size={13} style={{ color: '#C9A84C' }} />
-            <span>Export CSV</span>
+            <span>Export Roster</span>
           </button>
 
-          {/* Load 50 Staff Shortcut */}
-          {agents.length < 50 && (
-            <button
-              onClick={handleLoad50Staff}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition"
-              title="Populate 50 international staff members"
-            >
-              <Users size={14} style={{ color: '#C9A84C' }} />
-              <span>Expand to 50 Staff</span>
-            </button>
-          )}
+          {/* Reset to 8 Official Advisors */}
+          <button
+            onClick={handleReset8Advisors}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition cursor-pointer"
+            title="Reset to 8 official B Perfume sales advisors"
+          >
+            <Sparkles size={13} style={{ color: '#C9A84C' }} />
+            <span>Official 8 Advisors</span>
+          </button>
 
           {/* Equal Distribution Engine Button */}
           <button
             onClick={handleAutoDistribute}
             disabled={distributing}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold transition active:scale-95 shadow-xs"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition active:scale-95 shadow-xs cursor-pointer"
             style={{ background: '#FDF6E3', color: '#8B7A3D', border: '1px solid #E8D5A0' }}
-            title="Divide all 2,000+ leads equally among all 50 staff members"
+            title="Divide all 5,000 Indian leads equally among the 8 sales advisors (625 each)"
           >
             {distributing ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} style={{ color: '#C9A84C' }} />}
-            <span>{distributing ? 'Distributing...' : '⚡ Distribute Leads Equally'}</span>
+            <span>{distributing ? 'Distributing...' : '⚡ Distribute 5,000 Leads (625/Agent)'}</span>
           </button>
 
           {/* Add Agent Button */}
           <button
             onClick={() => { setForm({ name: '', email: '', department: '', password: '' }); setModal('add') }}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-white shadow-xs transition"
-            style={{ background: '#0F1729' }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white shadow-xs transition cursor-pointer"
+            style={{ background: '#0A0F1D' }}
           >
             <Plus size={14} />
-            <span>Add Staff</span>
+            <span>Add Advisor</span>
           </button>
+        </div>
+      </div>
+
+      {/* Executive Admin Hierarchy Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        {/* Super Admin Nouf */}
+        <div className="p-4 rounded-2xl border bg-white shadow-2xs relative overflow-hidden"
+          style={{ borderColor: 'rgba(201,168,76,0.4)', background: 'linear-gradient(135deg, #FFFDF9 0%, #FAF6EE 100%)' }}>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-xs" style={{ background: '#0A0F1D' }}>
+                <Crown size={16} style={{ color: '#C9A84C' }} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 font-serif">Nouf</h4>
+                <p className="text-[11px] font-mono text-slate-500">nouf@bperfume.com</p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase"
+              style={{ background: '#FDF6E3', color: '#8B7A3D', border: '1px solid #E8D5A0' }}>
+              Super Admin
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-600 mt-3 pt-2.5 border-t border-amber-100 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>Absolute System Control &amp; Global Oversight</span>
+          </p>
+        </div>
+
+        {/* Sub-Admin 1 */}
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 bg-slate-100">
+                <Shield size={16} className="text-amber-600" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">Tariq Al-Mansoor</h4>
+                <p className="text-[11px] font-mono text-slate-500">subadmin1@bperfume.com</p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600 border border-slate-200">
+              Sub-Admin
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
+            Fragrance Operations &amp; Logistics Management
+          </p>
+        </div>
+
+        {/* Sub-Admin 2 */}
+        <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-2xs">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-700 bg-slate-100">
+                <Shield size={16} className="text-amber-600" />
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-900">Reem Al-Kuwari</h4>
+                <p className="text-[11px] font-mono text-slate-500">subadmin2@bperfume.com</p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600 border border-slate-200">
+              Sub-Admin
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-500 mt-3 pt-2.5 border-t border-slate-100">
+            VIP Client Concierge &amp; Fragrance Stylists
+          </p>
         </div>
       </div>
 

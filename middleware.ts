@@ -6,12 +6,14 @@ export default withAuth(
     const { pathname } = req.nextUrl
     const role = req.nextauth.token?.role
 
-    if (pathname.startsWith('/admin') && role !== 'ADMIN') {
+    const isAdminOrSubAdmin = role === 'ADMIN' || role === 'SUB_ADMIN'
+
+    if (pathname.startsWith('/admin') && !isAdminOrSubAdmin) {
       return NextResponse.redirect(new URL('/agent/workspace', req.url))
     }
     if (pathname === '/') {
       return NextResponse.redirect(
-        new URL(role === 'ADMIN' ? '/admin/dashboard' : '/agent/workspace', req.url)
+        new URL(isAdminOrSubAdmin ? '/admin/dashboard' : '/agent/workspace', req.url)
       )
     }
     return NextResponse.next()

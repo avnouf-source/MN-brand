@@ -12,9 +12,9 @@ interface Step { id: string; type: string; message: string; options?: string[] }
 
 export function BotBuilder() {
   const [steps, setSteps] = useState<Step[]>([
-    { id: '1', type: 'greeting', message: 'Welcome to MN Brand! 👋 We are a global lead generation company. How can we help your business today?' },
-    { id: '2', type: 'menu', message: 'Please choose an option:', options: ['Lead Generation Services', 'CRM Solutions', 'Partnership Enquiry', 'Talk to an Expert'] },
-    { id: '3', type: 'route', message: 'Connecting you to a specialist now. Please hold for a moment.' },
+    { id: '1', type: 'greeting', message: 'Welcome to B Perfume! 🌸 We craft artisanal 12-hour long-lasting luxury fragrances. How can our fragrance advisors assist you today?' },
+    { id: '2', type: 'menu', message: 'Please select a fragrance collection:', options: ['CITYMAN Extrait de Parfum (Flagship)', 'Men Collection', 'Women Collection', 'Unisex & Oud Royale'] },
+    { id: '3', type: 'route', message: 'Connecting you with a personal B Perfume luxury fragrance consultant now.' },
   ])
   const [active, setActive] = useState(false)
   const [aiEnabled, setAiEnabled] = useState(true)

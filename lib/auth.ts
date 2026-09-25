@@ -3,33 +3,53 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from './prisma'
 import bcrypt from 'bcryptjs'
 
-// Fallback demo users if database is empty or uninitialized on serverless (e.g. Netlify)
-const DEMO_USERS = [
+// B Perfume Luxury CRM Users (Super Admin Nouf, 2 Sub-Admins, 8 Sales Agents)
+const B_PERFUME_USERS = [
+  // 1. Super Admin (Absolute System Control)
   {
-    id: 'admin-demo-id',
-    name: 'MN Admin',
-    email: 'admin@mnbrand.com',
-    password: 'admin123',
+    id: 'super-admin-nouf',
+    name: 'Nouf (Super Admin)',
+    email: 'nouf@bperfume.com',
+    password: 'nouf123',
     role: 'ADMIN',
   },
   {
-    id: 'sara-demo-id',
-    name: 'Sara Johnson',
-    email: 'sara@mnbrand.com',
-    password: 'agent123',
-    role: 'AGENT',
+    id: 'admin-alias',
+    name: 'Nouf (Super Admin)',
+    email: 'admin@bperfume.com',
+    password: 'admin123',
+    role: 'ADMIN',
+  },
+
+  // 2. Sub-Admins (Managerial Access)
+  {
+    id: 'subadmin-1',
+    name: 'Tariq Al-Mansoor (Sub-Admin)',
+    email: 'subadmin1@bperfume.com',
+    password: 'subadmin123',
+    role: 'SUB_ADMIN',
   },
   {
-    id: 'karim-demo-id',
-    name: 'Karim Al-Hassan',
-    email: 'karim@mnbrand.com',
-    password: 'agent123',
-    role: 'AGENT',
+    id: 'subadmin-2',
+    name: 'Reem Al-Kuwari (Sub-Admin)',
+    email: 'subadmin2@bperfume.com',
+    password: 'subadmin123',
+    role: 'SUB_ADMIN',
   },
+
+  // 3. Exactly 8 Sales Agents
+  { id: 'agent-1', name: 'Sara Al-Hashimi', email: 'sara@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-2', name: 'Karim Mansour', email: 'karim@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-3', name: 'Layla Vance', email: 'layla@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-4', name: 'Zayd Al-Otaibi', email: 'zayd@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-5', name: 'Maya Sharma', email: 'maya@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-6', name: 'Rohan Verma', email: 'rohan@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-7', name: 'Ananya Iyer', email: 'ananya@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-8', name: 'Vikram Patel', email: 'vikram@bperfume.com', password: 'agent123', role: 'AGENT' },
 ]
 
 export const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET || 'mnbrand-crm-super-secret-key-2024-xk9mq',
+  secret: process.env.NEXTAUTH_SECRET || 'bperfume-luxury-crm-secret-2025-xk9mq',
   session: { strategy: 'jwt' },
   pages: { signIn: '/login' },
   providers: [
@@ -42,9 +62,11 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
+        const cleanEmail = credentials.email.toLowerCase().trim()
+
         // 1. Try querying the database
         try {
-          const user = await prisma.user.findUnique({ where: { email: credentials.email.toLowerCase().trim() } })
+          const user = await prisma.user.findUnique({ where: { email: cleanEmail } })
           if (user) {
             const valid = await bcrypt.compare(credentials.password, user.passwordHash)
             if (valid) {
@@ -52,12 +74,12 @@ export const authOptions: NextAuthOptions = {
             }
           }
         } catch (dbError) {
-          console.warn('[NextAuth] Database query error (fallback to demo accounts):', dbError)
+          console.warn('[NextAuth] Database query error (fallback to B Perfume accounts):', dbError)
         }
 
-        // 2. Demo fallback if database is missing, empty, or unseeded (e.g. fresh Netlify deploy with SQLite)
-        const demoUser = DEMO_USERS.find(
-          u => u.email === credentials.email.toLowerCase().trim() && u.password === credentials.password
+        // 2. B Perfume fallback accounts
+        const demoUser = B_PERFUME_USERS.find(
+          u => u.email.toLowerCase() === cleanEmail && u.password === credentials.password
         )
         if (demoUser) {
           return { id: demoUser.id, name: demoUser.name, email: demoUser.email, role: demoUser.role }

@@ -1,11 +1,11 @@
 {
-  "name": "MN Brand — Global WhatsApp CRM",
-  "short_name": "MN Brand",
-  "description": "VIP International WhatsApp CRM and Global Lead Generation Platform",
+  "name": "B Perfume — Haute Parfumerie CRM",
+  "short_name": "B Perfume",
+  "description": "International Luxury Fragrance Clienteling & WhatsApp CRM Suite",
   "start_url": "/agent/workspace",
   "display": "standalone",
-  "background_color": "#0F1729",
-  "theme_color": "#0F1729",
+  "background_color": "#0A0F1D",
+  "theme_color": "#0A0F1D",
   "orientation": "portrait-primary",
   "icons": [
     {

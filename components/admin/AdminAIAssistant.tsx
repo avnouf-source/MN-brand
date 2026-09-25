@@ -16,19 +16,19 @@ export function AdminAIAssistant() {
       role: 'assistant',
       content: `### 👋 Welcome to the Super Admin Executive AI
 
-I am your private strategic intelligence assistant for **MN Brand CRM**. I analyze live data across **2,000+ international leads** and **50 staff members** to deliver real-time business insights, pipeline forecasting, and operational recommendations.
+I am your private strategic fragrance intelligence assistant for **B Perfume Haute Parfumerie**. I analyze live data across **5,000+ Indian perfume client inquiries**, flacon orders, and our **8 Sales Advisors** to deliver real-time luxury sales insights, CITYMAN Extrait volume forecasting, and boutique dispatch recommendations.
 
-Select a quick action below or ask me any question regarding your sales pipeline and team operations.`,
+Select a quick action below or ask me any question regarding your sales pipeline and sales advisor operations.`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [metrics, setMetrics] = useState({
-    totalLeads: '2,000+',
-    totalPipelineValue: '$4,950,000',
-    closedRevenue: '$1,620,000',
-    activeStaff: '50 Agents',
+    totalLeads: '5,000+',
+    totalPipelineValue: '₹3,72,50,000',
+    closedRevenue: '₹1,24,80,000',
+    activeStaff: '8 Advisors',
   })
 
   async function handleSend(promptText?: string, action: string = 'custom') {
@@ -102,12 +102,12 @@ Select a quick action below or ask me any question regarding your sales pipeline
       .map(m => `[${m.timestamp}] ${m.role.toUpperCase()}:\n${m.content}\n\n${'-'.repeat(40)}`)
       .join('\n\n')
 
-    const header = `# MN BRAND CRM — EXECUTIVE INTELLIGENCE BRIEF\nGenerated: ${new Date().toLocaleString()}\n\n`
+    const header = `# B PERFUME — EXECUTIVE INTELLIGENCE BRIEF\nGenerated: ${new Date().toLocaleString()}\n\n`
     const blob = new Blob([header + fullTranscript], { type: 'text/markdown;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `MN_Brand_Executive_AI_Report_${Date.now()}.md`)
+    link.setAttribute('download', `B_Perfume_Executive_AI_Report_${Date.now()}.md`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

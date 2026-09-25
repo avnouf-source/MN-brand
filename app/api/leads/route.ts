@@ -9,11 +9,12 @@ export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const userId = (session.user as any).id
-  const isAdmin = (session.user as any).role === 'ADMIN'
+  const role = (session.user as any).role
+  const isSuperOrSubAdmin = role === 'ADMIN' || role === 'SUB_ADMIN'
 
   try {
     const leads = await prisma.lead.findMany({
-      where: isAdmin ? {} : { assignedAgentId: userId },
+      where: isSuperOrSubAdmin ? {} : { assignedAgentId: userId },
       include: { assignedAgent: { select: { id: true, name: true } }, conversation: { include: { messages: { orderBy: { createdAt: 'asc' } } } } },
       orderBy: { updatedAt: 'desc' },
     })
@@ -24,14 +25,14 @@ export async function GET() {
     console.warn('[GET /api/leads] DB query failed, using safe fallback generator:', err)
   }
 
-  // Fallback procedural leads
-  const { generate50Agents, generate2000Leads } = await import('@/lib/bulk-generator')
-  const agents = generate50Agents()
-  const allLeads = generate2000Leads(agents)
+  // Fallback procedural B Perfume 5000 Indian leads
+  const { generate8PerfumeAgents, generate5000IndianLeads } = await import('@/lib/bulk-generator')
+  const agents = generate8PerfumeAgents()
+  const allLeads = generate5000IndianLeads(agents)
 
-  if (!isAdmin) {
+  if (!isSuperOrSubAdmin) {
     const userLeads = allLeads.filter(l => l.assignedAgentId === userId)
-    return NextResponse.json(userLeads.length > 0 ? userLeads : allLeads.slice(0, 40))
+    return NextResponse.json(userLeads.length > 0 ? userLeads : allLeads.slice(0, 625))
   }
 
   return NextResponse.json(allLeads)

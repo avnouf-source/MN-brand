@@ -121,7 +121,7 @@ export function GlobalDialerModal({ isOpen, onClose, onSaveAsLead }: Props) {
 
   function startWhatsApp() {
     if (!fullNumber || fullNumber.length < 5) return
-    window.open(waLink(fullNumber, 'Hello! This is MN Brand. How can we assist your business today?'), '_blank')
+    window.open(waLink(fullNumber, 'Hello! This is B Perfume Haute Parfumerie. How can our fragrance advisors assist you today?'), '_blank')
   }
 
   function formatDuration(sec: number) {

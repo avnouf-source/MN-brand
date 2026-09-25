@@ -1,18 +1,18 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Paperclip, Smile, Wand2, Send, Bot, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Languages, Flame, Clock, ShieldAlert, Zap } from 'lucide-react'
+import { Paperclip, Send, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Clock, ShieldAlert, Zap, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { QuickRepliesPopup } from './QuickRepliesPopup'
 import { VoiceNoteBubble } from './VoiceNoteBubble'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
 import type { Lead, Message, QuickReply } from './AgentWorkspace'
 import { formatPhoneDisplay, parsePhone, waLink, telLink, getCountryLocalTime } from '@/lib/countries'
-import { SUPPORTED_LANGUAGES, translateText } from '@/lib/translation'
 import { analyzeSentiment, calculatePredictiveScore } from '@/lib/ai-scoring'
 
 interface Props {
   lead: Lead
   quickReplies: QuickReply[]
   onNewMessage: (leadId: string, msg: Message) => void
+  onBack?: () => void
 }
 
 function isUserOffline(msgs: Message[]): boolean {
@@ -41,14 +41,23 @@ function groupMsgs(msgs: Message[]) {
   return g
 }
 
-export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
+const STAGE_LABELS: Record<string, { label: string; bg: string; color: string }> = {
+  NEW_INQUIRY: { label: 'New Inquiry', bg: '#eff6ff', color: '#3b82f6' },
+  NEW: { label: 'New Inquiry', bg: '#eff6ff', color: '#3b82f6' },
+  SCENT_RECOMMENDATION: { label: 'Scent Recommendation', bg: '#FDF6E3', color: '#C9A84C' },
+  TALKING: { label: 'Scent Recommendation', bg: '#FDF6E3', color: '#C9A84C' },
+  ORDER_PLACED: { label: 'Order Placed', bg: '#f5f3ff', color: '#8b5cf6' },
+  SHIPPED: { label: 'Shipped', bg: '#ecfdf5', color: '#059669' },
+  DELIVERED: { label: 'Delivered', bg: '#f0fdf4', color: '#10b981' },
+  DONE: { label: 'Delivered', bg: '#f0fdf4', color: '#10b981' },
+}
+
+export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [showQR, setShowQR] = useState(false)
   const [isRecordingVoice, setIsRecordingVoice] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
-  const [targetLang, setTargetLang] = useState('es')
-  const [translatedMap, setTranslatedMap] = useState<Record<string, string>>({})
   const [escalated, setEscalated] = useState(false)
   const btm = useRef<HTMLDivElement>(null)
   const msgs = lead.conversation?.messages ?? []
@@ -61,6 +70,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
   const localTimeInfo = getCountryLocalTime(lead.phone)
   const sentimentInfo = analyzeSentiment(msgs)
   const scoreInfo = calculatePredictiveScore(lead)
+  const currentStageInfo = STAGE_LABELS[lead.stage] || STAGE_LABELS.NEW_INQUIRY
 
   // 15-minute SLA breach calculation
   const lastInbound = [...msgs].reverse().find(m => m.direction === 'INBOUND')
@@ -72,7 +82,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
     setEscalated(true)
     const notificationMsg: Message = {
       id: Date.now().toString(),
-      body: `⚡ SLA ESCALATION: Lead automatically reassigned to Senior Operations Manager due to 15m unanswered threshold.`,
+      body: `⚡ SLA ESCALATION: Lead automatically escalated to Senior Scent Operations Manager due to 15m unanswered threshold.`,
       direction: 'OUTBOUND',
       type: 'NOTE',
       senderType: 'system_escalation',
@@ -87,24 +97,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
   function onInput(v: string) { setInput(v); setShowQR(v.startsWith('/')) }
   function onQR(body: string) { setInput(body); setShowQR(false) }
 
-  function toggleTranslateInbound(msgId: string, text: string) {
-    if (translatedMap[msgId]) {
-      const copy = { ...translatedMap }
-      delete copy[msgId]
-      setTranslatedMap(copy)
-    } else {
-      const tr = translateText(text, targetLang)
-      setTranslatedMap(prev => ({ ...prev, [msgId]: tr }))
-    }
-  }
-
-  function translateDraft() {
-    if (!input.trim()) return
-    const translated = translateText(input, targetLang)
-    setInput(translated)
-  }
-
-  function insertFollowupSequence(template: string) {
+  function insertPerfumeRecommendation(template: string) {
     setInput(template)
   }
 
@@ -119,29 +112,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
     } finally { setSending(false) }
   }
 
-  async function sendVoiceNote(duration: string) {
-    setIsRecordingVoice(false)
-    const tmp: Message = {
-      id: Date.now().toString(),
-      body: `Voice Note (${duration})`,
-      direction: 'OUTBOUND',
-      type: 'AUDIO',
-      senderType: 'agent',
-      createdAt: new Date().toISOString(),
-      isRead: false,
-    }
-    onNewMessage(lead.id, tmp)
-    try {
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leadId: lead.id, body: `Voice Note (${duration})`, type: 'AUDIO' }),
-      })
-    } catch {}
-  }
-
   async function triggerAIAutoReply() {
-    if (aiLoading) return
     setAiLoading(true)
     try {
       const res = await fetch('/api/bot/auto-reply', {
@@ -149,46 +120,100 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leadId: lead.id,
-          customerMessage: msgs.filter(m => m.direction === 'INBOUND').slice(-1)[0]?.body,
+          customerMessage: msgs.filter(m => m.direction === 'INBOUND').slice(-1)[0]?.body || 'I would like to inquire about B Perfume fragrances.'
         }),
       })
-      if (res.ok) {
-        const data = await res.json()
-        if (data.message) {
-          onNewMessage(lead.id, data.message)
-        }
+      const data = await res.json()
+      if (data?.message) {
+        onNewMessage(lead.id, data.message)
       }
+    } catch (err) {
+      console.warn('AI auto-reply trigger error:', err)
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  async function sendVoiceNote(audioBlob: Blob, durationSec: number) {
+    setIsRecordingVoice(false)
+    const audioUrl = URL.createObjectURL(audioBlob)
+
+    const voiceMsg: Message = {
+      id: Date.now().toString(),
+      body: `🎙️ Voice Note (${durationSec}s)`,
+      direction: 'OUTBOUND',
+      type: 'MEDIA',
+      senderType: 'agent',
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    }
+    ;(voiceMsg as any).mediaUrl = audioUrl
+    ;(voiceMsg as any).duration = durationSec
+
+    onNewMessage(lead.id, voiceMsg)
+
+    try {
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: lead.id,
+          body: `🎙️ Voice Note (${durationSec}s)`,
+          type: 'MEDIA',
+          mediaUrl: audioUrl,
+        }),
+      })
     } catch {}
-    finally { setAiLoading(false) }
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header with Professional Calling & WhatsApp Integration */}
-      <div className="px-4 py-3 border-b border-slate-100 bg-white flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style={{ background: '#0F1729' }}>
+    <div className="flex flex-col h-full bg-[#fbf9f5] min-w-0">
+      {/* Top Header - Mobile Native App Optimized */}
+      <div className="px-4 py-3 bg-white border-b border-slate-100 flex items-center justify-between gap-2 flex-shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {/* Mobile Back to Leads Navigation Button */}
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="lg:hidden p-2 -ml-1 rounded-xl text-slate-600 hover:bg-slate-100 transition active:scale-95 flex items-center gap-1"
+              title="Back to Leads"
+            >
+              <ArrowLeft size={16} />
+              <span className="text-xs font-semibold">Leads</span>
+            </button>
+          )}
+
+          {/* Customer Avatar */}
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-xs"
+            style={{ background: 'linear-gradient(135deg, #0A0F1D 0%, #1A2338 100%)', border: '1px solid rgba(201,168,76,0.3)' }}>
             {lead.name.charAt(0)}
           </div>
+
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate">{lead.name}</p>
-            <div className="flex items-center gap-1.5">
-              {country && <span className="text-sm leading-none">{country.flag}</span>}
-              <p className="text-xs text-slate-400 font-mono tracking-wide truncate">{displayPhone}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-semibold text-sm text-slate-800 truncate">{lead.name}</span>
+              {country && <span className="text-xs leading-none">{country.flag}</span>}
+              <span className="text-[11px] text-slate-500 font-mono hidden sm:inline">{displayPhone}</span>
+            </div>
+            <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              {lead.company && <span className="truncate">{lead.company}</span>}
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-emerald-600 font-medium">B Perfume VIP</span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          {/* AI Auto-Reply Trigger Button */}
+          {/* Luxury Fragrance Consultant AI Trigger Button */}
           <button
             onClick={triggerAIAutoReply}
             disabled={aiLoading}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-violet-200 bg-violet-50 hover:bg-violet-100 text-violet-700 text-xs font-semibold transition"
-            title="Generate AI Auto-Reply"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold transition cursor-pointer"
+            title="Luxury Scent Consultant AI Auto-Reply"
           >
-            <Sparkles size={13} className={aiLoading ? 'animate-spin' : ''} />
-            <span className="hidden sm:inline">AI Auto-Reply</span>
+            <Sparkles size={13} className={aiLoading ? 'animate-spin' : ''} style={{ color: '#C9A84C' }} />
+            <span className="hidden sm:inline">AI Consultant</span>
           </button>
 
           {/* WhatsApp Direct Link */}
@@ -197,7 +222,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
             target="_blank"
             rel="noreferrer"
             className="p-2 rounded-xl hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 transition"
-            title="Open WhatsApp Web"
+            title="Open in WhatsApp"
           >
             <MessageCircle size={16} />
           </a>
@@ -205,61 +230,49 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
           {/* Professional Direct Calling Icon */}
           <a
             href={telLink(lead.phone)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold shadow-xs transition active:scale-95"
-            style={{ background: '#0F1729' }}
-            title={`Direct Voice Call to ${displayPhone}`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-xs font-semibold shadow-xs transition active:scale-95 cursor-pointer"
+            style={{ background: '#0A0F1D' }}
+            title={`Direct Call to ${displayPhone}`}
           >
             <Phone size={13} style={{ color: '#C9A84C' }} />
             <span className="hidden sm:inline">Call</span>
           </a>
 
-          <span className="hidden md:inline-flex px-2.5 py-1 rounded-full text-xs font-medium" style={{
-            background: lead.stage === 'NEW' ? '#eff6ff' : lead.stage === 'TALKING' ? '#FDF6E3' : lead.stage === 'ORDER_PLACED' ? '#f5f3ff' : '#f0fdf4',
-            color: lead.stage === 'NEW' ? '#3b82f6' : lead.stage === 'TALKING' ? '#C9A84C' : lead.stage === 'ORDER_PLACED' ? '#8b5cf6' : '#10b981',
-          }}>
-            {lead.stage === 'NEW' ? 'New' : lead.stage === 'TALKING' ? 'Talking' : lead.stage === 'ORDER_PLACED' ? 'Order Placed' : 'Done'}
+          <span
+            className="hidden md:inline-flex px-2.5 py-1 rounded-full text-xs font-semibold"
+            style={{ background: currentStageInfo.bg, color: currentStageInfo.color }}
+          >
+            {currentStageInfo.label}
           </span>
         </div>
       </div>
 
-      {/* Enterprise Intelligence Sub-Header: Local Time & Sleep Warning, AI Sentiment, Predictive Score */}
-      <div className="px-4 py-2 bg-slate-50/80 border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs flex-shrink-0">
+      {/* Intelligence Sub-Header: Local Time & Predictive Score */}
+      <div className="px-4 py-2 bg-white/70 backdrop-blur-xs border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs flex-shrink-0">
         <div className="flex flex-wrap items-center gap-2">
-          {/* Client Local Time & Sleep Warning */}
+          {/* Local Time & Sleep Warning */}
           <span
             className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs"
             style={{ background: localTimeInfo.bg, color: localTimeInfo.color }}
-            title={`Timezone: ${localTimeInfo.timezoneName}`}
+            title={`Local Time: ${localTimeInfo.timezoneName}`}
           >
             <Clock size={11} />
             <span>{localTimeInfo.badgeText}</span>
           </span>
 
-          {/* AI Sentiment */}
-          <span
-            className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs"
-            style={{ background: sentimentInfo.bg, color: sentimentInfo.color }}
-            title={sentimentInfo.summary}
-          >
-            <span>{sentimentInfo.emoji}</span>
-            <span>Mood: {sentimentInfo.sentiment}</span>
-          </span>
-
-          {/* Predictive Lead Conversion Probability */}
+          {/* Predictive Lead Score */}
           <span
             className="px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 shadow-2xs"
             style={{ background: scoreInfo.bg, color: scoreInfo.color }}
-            title={scoreInfo.reasons.join(' · ')}
+            title={`AI Intent: ${scoreInfo.label}`}
           >
-            <Flame size={11} />
-            <span>Score: {scoreInfo.score}/100 ({scoreInfo.label})</span>
+            <span>🎯 Scent Buying Intent: {scoreInfo.score}/100</span>
           </span>
         </div>
 
-        {/* Omnichannel Channel Origin */}
         <div className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-          <span>Channel: WhatsApp Verified</span>
+          <span>India WhatsApp Verified (+91)</span>
         </div>
       </div>
 
@@ -269,13 +282,13 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
           <div className="flex items-center gap-2 text-red-700">
             <ShieldAlert size={16} className="text-red-600 flex-shrink-0" />
             <span>
-              <strong>⚠️ Overdue SLA:</strong> Customer waiting for <strong>{minutesSinceInbound} minutes</strong> without staff reply (15m Threshold Exceeded).
+              <strong>⚠️ Overdue SLA:</strong> Fragrance client waiting for <strong>{minutesSinceInbound} minutes</strong> without staff reply.
             </span>
           </div>
           <button
             type="button"
             onClick={handleEscalate}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 text-white font-bold text-[11px] shadow-xs hover:bg-red-700 transition active:scale-95 flex-shrink-0"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-red-600 text-white font-bold text-[11px] shadow-xs hover:bg-red-700 transition active:scale-95 flex-shrink-0 cursor-pointer"
           >
             <Zap size={12} />
             <span>Escalate to Manager</span>
@@ -283,107 +296,78 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
         </div>
       )}
 
-      {/* 24h Offline banner with 1-Click Follow-Up Sequences */}
+      {/* 24h Offline Alert */}
       {offline && (
-        <div className="mx-4 mt-3 p-3.5 rounded-2xl border flex-shrink-0 space-y-2" style={{ background: '#FDF6E3', borderColor: '#E8D5A0' }}>
-          <div className="flex items-start gap-2 text-xs" style={{ color: '#8B7A3D' }}>
-            <AlertCircle size={15} className="mt-0.5 flex-shrink-0" style={{ color: '#C9A84C' }} />
-            <div>
-              <span className="font-bold">Contact offline for &gt; 24 hours.</span> WhatsApp policy requires an approved template or sequence to re-engage:
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            <button
-              type="button"
-              onClick={() => insertFollowupSequence(`Hi ${lead.name}! 👋 Just checking in to see if you had any questions regarding our proposal for ${lead.company || 'your business'}?`)}
-              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[11px] font-semibold text-amber-900 hover:bg-amber-100/60 transition shadow-2xs active:scale-95"
-            >
-              👋 24h Re-engagement
-            </button>
-            <button
-              type="button"
-              onClick={() => insertFollowupSequence(`Hi ${lead.name}, our directors approved an exclusive 15% VIP incentive for ${lead.company || 'your team'} if we onboard this week! 🎁`)}
-              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[11px] font-semibold text-amber-900 hover:bg-amber-100/60 transition shadow-2xs active:scale-95"
-            >
-              🏷️ 15% VIP Incentive
-            </button>
-            <button
-              type="button"
-              onClick={() => insertFollowupSequence(`Hi ${lead.name}, let's schedule a brief 5-minute call today to address your questions. Are you free this afternoon? 📞`)}
-              className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-[11px] font-semibold text-amber-900 hover:bg-amber-100/60 transition shadow-2xs active:scale-95"
-            >
-              📅 5-Min Strategy Call
-            </button>
-          </div>
+        <div className="mx-4 mt-2 p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-2 text-xs text-amber-800 flex-shrink-0">
+          <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
+          <span>More than 24 hours since customer&apos;s last message. Scent re-engagement template recommended.</span>
         </div>
       )}
 
-      {/* Messages Feed */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1 bg-slate-50/40">
-        {groups.map(g => (
-          <div key={g.date}>
-            <div className="flex items-center justify-center my-3">
-              <span className="px-3 py-1 rounded-full text-[10px] font-semibold text-slate-400 bg-white border border-slate-100">{g.date}</span>
+      {/* Messages Scroll Area */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {groups.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-full text-center py-16 text-slate-400">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3 shadow-2xs"
+              style={{ background: '#FDF6E3', border: '1px solid rgba(201,168,76,0.3)' }}>
+              <Sparkles size={20} style={{ color: '#C9A84C' }} />
             </div>
+            <p className="text-sm font-semibold text-slate-700">Fresh Client Conversation</p>
+            <p className="text-xs text-slate-400 max-w-xs mt-1">
+              No previous messages. Click below or send a bespoke recommendation to begin consultation.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => insertPerfumeRecommendation('Dear Client, thank you for reaching out to B Perfume Haute Parfumerie. Which collection may we curate for you today: Men, Women, or Unisex?')}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-amber-300 text-slate-700 shadow-2xs transition"
+              >
+                🌸 Welcome Consultation
+              </button>
+              <button
+                type="button"
+                onClick={() => insertPerfumeRecommendation('We are delighted to present CITYMAN Extrait de Parfum — our iconic 12-hour long-lasting masculine formulation.')}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-200 hover:border-amber-300 text-slate-700 shadow-2xs transition"
+              >
+                🎩 CITYMAN Extrait Intro
+              </button>
+            </div>
+          </div>
+        )}
+
+        {groups.map(g => (
+          <div key={g.date} className="space-y-3">
+            <div className="flex items-center justify-center">
+              <span className="px-3 py-1 rounded-full bg-white/80 border border-slate-200/70 text-[10px] font-semibold text-slate-500 shadow-2xs">
+                {g.date}
+              </span>
+            </div>
+
             {g.msgs.map(m => (
-              <div key={m.id} className={`flex mb-2 ${m.direction === 'OUTBOUND' ? 'justify-end' : 'justify-start'}`}>
-                {/* Voice Note Audio Bubble */}
-                {m.type === 'AUDIO' ? (
+              <div key={m.id} className={`flex ${m.direction === 'OUTBOUND' ? 'justify-end' : 'justify-start'}`}>
+                {m.type === 'MEDIA' ? (
                   <VoiceNoteBubble
-                    duration="0:14"
+                    mediaUrl={(m as any).mediaUrl || ''}
+                    duration={(m as any).duration || 12}
                     direction={m.direction as any}
-                    timestamp={fmtTime(m.createdAt)}
+                    createdAt={m.createdAt}
                   />
-                ) : m.type === 'BOT' || m.senderType === 'ai_assistant' ? (
-                  /* AI Auto-Reply Message Bubble */
-                  <div className="max-w-xs md:max-w-md bg-violet-50/80 border border-violet-100 rounded-2xl p-3.5 shadow-xs">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <div className="w-4 h-4 rounded-full bg-violet-600 text-white flex items-center justify-center text-[9px] font-bold">
-                        AI
-                      </div>
-                      <span className="text-[10px] font-bold text-violet-700 uppercase tracking-wider">AI Assistant (Auto-Reply)</span>
-                    </div>
-                    <p className="text-xs text-slate-700 whitespace-pre-wrap leading-relaxed">{m.body}</p>
-                    <p className="text-[10px] text-violet-400 mt-1.5 font-mono">{fmtTime(m.createdAt)}</p>
-                  </div>
                 ) : m.type === 'NOTE' ? (
-                  /* Private Internal Note */
                   <div className="max-w-xs rounded-2xl p-3 border" style={{ background: '#FDF6E3', borderColor: '#E8D5A0' }}>
                     <p className="text-[10px] font-bold uppercase mb-1" style={{ color: '#C9A84C' }}>Private Note</p>
                     <p className="text-xs" style={{ color: '#8B7A3D' }}>{m.body}</p>
                     <p className="text-[10px] mt-1" style={{ color: '#C9A84C80' }}>{fmtTime(m.createdAt)}</p>
                   </div>
                 ) : (
-                  /* Standard Text Chat Bubble with Real-Time Translation */
                   <div className="max-w-xs md:max-w-md rounded-2xl px-3.5 py-2.5 shadow-xs" style={{
-                    background: m.direction === 'OUTBOUND' ? '#0F1729' : '#fff',
+                    background: m.direction === 'OUTBOUND' ? '#0A0F1D' : '#fff',
                     color: m.direction === 'OUTBOUND' ? '#fff' : '#334155',
                     border: m.direction === 'INBOUND' ? '1px solid #e2e8f0' : 'none',
                     borderRadius: m.direction === 'OUTBOUND' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
                   }}>
-                    <p className="text-sm leading-relaxed">{m.body}</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{m.body}</p>
 
-                    {/* Translated text block */}
-                    {translatedMap[m.id] && (
-                      <div className="mt-1.5 pt-1.5 border-t border-slate-100 text-xs text-amber-800 bg-amber-50/70 p-2 rounded-lg">
-                        <span className="font-bold text-[9px] uppercase tracking-wide block text-amber-700">Translation:</span>
-                        {translatedMap[m.id]}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between gap-3 mt-1.5">
-                      {m.direction === 'INBOUND' ? (
-                        <button
-                          type="button"
-                          onClick={() => toggleTranslateInbound(m.id, m.body)}
-                          className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-amber-700 transition"
-                          title="Translate message"
-                        >
-                          <Languages size={11} style={{ color: '#C9A84C' }} />
-                          <span>{translatedMap[m.id] ? 'Original' : 'Translate'}</span>
-                        </button>
-                      ) : <span />}
-
+                    <div className="flex items-center justify-end gap-2 mt-1.5">
                       <p className="text-[10px] font-mono" style={{ color: m.direction === 'OUTBOUND' ? 'rgba(255,255,255,0.45)' : '#94a3b8' }}>
                         {fmtTime(m.createdAt)}
                       </p>
@@ -418,67 +402,33 @@ export function ChatWindow({ lead, quickReplies, onNewMessage }: Props) {
                   value={input}
                   onChange={e => onInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-                  placeholder="Type a message... (/ for quick replies)"
+                  placeholder="Type fragrance advice... (/ for quick replies)"
                   rows={1}
                   className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2 resize-none placeholder-slate-400"
                   style={{ '--tw-ring-color': '#C9A84C', minHeight: 42 } as any}
                 />
               </div>
 
-              {/* Language Selector & Draft Translator */}
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <select
-                  value={targetLang}
-                  onChange={e => setTargetLang(e.target.value)}
-                  className="h-10 px-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
-                  title="Select Target Language"
-                >
-                  {SUPPORTED_LANGUAGES.map(l => (
-                    <option key={l.code} value={l.code}>
-                      {l.flag} {l.name}
-                    </option>
-                  ))}
-                </select>
-
-                <button
-                  type="button"
-                  onClick={translateDraft}
-                  disabled={!input.trim()}
-                  className="p-2.5 rounded-xl border border-slate-200 hover:bg-amber-50 text-slate-600 hover:text-amber-700 transition flex-shrink-0 disabled:opacity-30 active:scale-95"
-                  title="Translate Draft to Target Language"
-                >
-                  <Languages size={15} style={{ color: '#C9A84C' }} />
-                </button>
-              </div>
-
-              {/* Voice Note Mic Button */}
+              {/* Voice Note Button */}
               <button
                 type="button"
                 onClick={() => setIsRecordingVoice(true)}
-                className="p-2.5 rounded-xl border border-slate-200 hover:bg-amber-50/50 text-slate-600 hover:text-amber-700 transition flex-shrink-0 active:scale-95"
+                className="p-2.5 rounded-xl border border-slate-200 hover:bg-amber-50 text-slate-600 hover:text-amber-700 transition flex-shrink-0 active:scale-95"
                 title="Record Voice Note"
               >
                 <Mic size={16} style={{ color: '#C9A84C' }} />
               </button>
 
+              {/* Send Button */}
               <button
                 type="button"
-                onClick={triggerAIAutoReply}
-                disabled={aiLoading}
-                className="p-2 rounded-xl hover:bg-violet-50 text-slate-400 hover:text-violet-600 transition flex-shrink-0"
-                title="AI Auto-Reply Assistant"
-              >
-                <Wand2 size={16} />
-              </button>
-
-              <button
                 onClick={send}
                 disabled={!input.trim() || sending}
-                className="p-2.5 rounded-xl text-white transition flex-shrink-0 disabled:opacity-40 active:scale-95"
-                style={{ background: '#0F1729' }}
+                className="p-2.5 rounded-xl text-white transition disabled:opacity-40 flex-shrink-0 shadow-xs active:scale-95 cursor-pointer"
+                style={{ background: '#0A0F1D' }}
                 title="Send Message"
               >
-                <Send size={16} />
+                <Send size={16} style={{ color: '#C9A84C' }} />
               </button>
             </div>
           )}

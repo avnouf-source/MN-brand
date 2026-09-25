@@ -36,8 +36,8 @@ export function SettingsForm({ initialConfig }: { initialConfig: Config | null }
     }
   )
   const [theme, setTheme] = useState<BrandTheme>({
-    brandName: 'MN Brand',
-    primaryColor: '#0F1729',
+    brandName: 'B Perfume',
+    primaryColor: '#0A0F1D',
     accentColor: '#C9A84C',
   })
   const [showToken, setShowToken] = useState(false)
@@ -170,7 +170,7 @@ export function SettingsForm({ initialConfig }: { initialConfig: Config | null }
               <input
                 value={theme.brandName}
                 onChange={e => setTheme({ ...theme, brandName: e.target.value })}
-                placeholder="e.g. MN Brand, Apex Global"
+                placeholder="e.g. B Perfume, Haute Parfumerie"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2"
                 style={{ '--tw-ring-color': '#C9A84C' } as any}
               />
@@ -388,7 +388,7 @@ export function SettingsForm({ initialConfig }: { initialConfig: Config | null }
               <h3 className="text-base font-bold text-slate-900">Developer API Keys &amp; Webhooks</h3>
             </div>
             <p className="text-xs text-slate-500">
-              Integrate external ERPs, Zapier, custom websites, and WhatsApp Cloud API webhook listeners into MN Brand.
+              Integrate external ERPs, Zapier, custom websites, and WhatsApp Cloud API webhook listeners into B Perfume CRM.
             </p>
 
             {/* Live API Key */}

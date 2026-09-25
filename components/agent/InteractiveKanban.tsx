@@ -13,11 +13,19 @@ interface Props {
 }
 
 const COLUMNS = [
-  { id: 'NEW', label: 'New Leads', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
-  { id: 'TALKING', label: 'In Conversation', color: '#C9A84C', bg: '#FDF6E3', border: '#fef08a' },
+  { id: 'NEW_INQUIRY', label: 'New Inquiry', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
+  { id: 'SCENT_RECOMMENDATION', label: 'Scent Recommendation', color: '#C9A84C', bg: '#FDF6E3', border: '#fef08a' },
   { id: 'ORDER_PLACED', label: 'Order Placed', color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe' },
-  { id: 'DONE', label: 'Closed / Done', color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0' },
+  { id: 'SHIPPED', label: 'Shipped', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+  { id: 'DELIVERED', label: 'Delivered', color: '#10b981', bg: '#f0fdf4', border: '#bbf7d0' },
 ]
+
+function normalizeStage(stage: string): string {
+  if (stage === 'NEW') return 'NEW_INQUIRY'
+  if (stage === 'TALKING') return 'SCENT_RECOMMENDATION'
+  if (stage === 'DONE') return 'DELIVERED'
+  return stage
+}
 
 const TAG_COLORS: Record<string, { bg: string; text: string }> = {
   HOT: { bg: '#fee2e2', text: '#ef4444' },
@@ -73,7 +81,7 @@ export function InteractiveKanban({ leads, onSelect, selectedId, onUpdate }: Pro
     <div className="flex-1 overflow-x-auto p-4 bg-slate-100/60 min-h-0">
       <div className="flex gap-4 min-w-[1000px] h-full items-start">
         {COLUMNS.map((col, colIdx) => {
-          const colLeads = leads.filter(l => l.stage === col.id)
+          const colLeads = leads.filter(l => normalizeStage(l.stage) === col.id)
           const isOver = dragOverCol === col.id
 
           return (

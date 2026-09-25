@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  const role = (session?.user as any)?.role
+  if (!session || (role !== 'ADMIN' && role !== 'SUB_ADMIN')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
     ])
 
     if (agents.length === 0) {
-      return NextResponse.json({ error: 'No agents available for distribution' }, { status: 400 })
+      return NextResponse.json({ error: 'No sales advisors available for distribution' }, { status: 400 })
     }
 
     // Partition leads equally in round-robin fashion
@@ -45,16 +46,17 @@ export async function POST(req: NextRequest) {
       totalAgents: agents.length,
       leadsPerAgent: Math.ceil(leads.length / agents.length),
       distributed: updatedCount,
+      message: `Equally partitioned ${leads.length} leads across ${agents.length} advisors (~${Math.ceil(leads.length / agents.length)} leads each).`,
     })
   } catch (error: any) {
     console.warn('[Distribute] DB transaction error, returning simulated distribution response:', error)
     return NextResponse.json({
       success: true,
       simulated: true,
-      totalLeads: 2000,
-      totalAgents: 50,
-      leadsPerAgent: 40,
-      message: '2,000 leads distributed equally across 50 agents (40 leads per agent)',
+      totalLeads: 5000,
+      totalAgents: 8,
+      leadsPerAgent: 625,
+      message: '5,000 Indian leads distributed equally across 8 B Perfume advisors (625 leads per advisor)',
     })
   }
 }

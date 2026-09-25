@@ -46,23 +46,23 @@ export function PipelineDashboard({ leads, active, onChange }: Props) {
         <div className="rounded-xl p-3" style={{ background: '#FDF6E3' }}>
           <div className="flex items-center gap-1.5 mb-1">
             <TrendingUp size={11} style={{ color: '#C9A84C' }} />
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#C9A84C' }}>Hot Leads</span>
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#C9A84C' }}>VIP Scent Leads</span>
           </div>
           <p className="text-2xl font-bold" style={{ color: '#C9A84C' }}>{hot}</p>
         </div>
-        <div className="bg-violet-50 rounded-xl p-3">
+        <div className="bg-amber-50/70 border border-amber-200/50 rounded-xl p-3">
           <div className="flex items-center gap-1.5 mb-1">
-            <Activity size={11} className="text-violet-500" />
-            <span className="text-[10px] font-bold text-violet-600 uppercase tracking-wide">Orders</span>
+            <Activity size={11} className="text-amber-600" />
+            <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wide">Perfume Orders</span>
           </div>
-          <p className="text-2xl font-bold text-violet-600">{orders}</p>
+          <p className="text-2xl font-bold text-amber-900">{orders}</p>
         </div>
-        <div className="rounded-xl p-3" style={{ background: '#f0f4f8' }}>
+        <div className="rounded-xl p-3" style={{ background: '#f8f6f0' }}>
           <div className="flex items-center gap-1.5 mb-1">
-            <Users size={11} style={{ color: '#0F1729' }} />
-            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#0F1729' }}>Total</span>
+            <Users size={11} style={{ color: '#0A0F1D' }} />
+            <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#0A0F1D' }}>Indian Clients</span>
           </div>
-          <p className="text-2xl font-bold" style={{ color: '#0F1729' }}>{leads.length}</p>
+          <p className="text-2xl font-bold" style={{ color: '#0A0F1D' }}>{leads.length}</p>
         </div>
       </div>
 

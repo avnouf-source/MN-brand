@@ -7,6 +7,7 @@ import { ContextPanel } from './ContextPanel'
 import { PipelineDashboard, getConvStatus } from './PipelineDashboard'
 import { LeadCaptureModal } from './LeadCaptureModal'
 import { Plus, MessageSquare, Info, List, Columns3, LayoutList, CheckSquare, Target, X, CheckCircle } from 'lucide-react'
+import { BPerfumeLogo, BPerfumeWordmark } from '@/components/shared/BPerfumeLogo'
 
 export interface Message {
   id: string; body: string; direction: string; type: string
@@ -42,10 +43,10 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
   const [channelFilter, setChannelFilter] = useState<'ALL' | 'WHATSAPP' | 'INSTAGRAM' | 'EMAIL'>('ALL')
   const [showTasksDrawer, setShowTasksDrawer] = useState(false)
   const [tasks, setTasks] = useState([
-    { id: 't1', title: 'Follow up with 5 HOT priority leads', completed: true },
-    { id: 't2', title: 'Dispatch custom enterprise quote for GCC accounts', completed: true },
-    { id: 't3', title: 'Review 3 dormant chats older than 24 hours', completed: false },
-    { id: 't4', title: 'Complete voice note outreach for European leads', completed: false },
+    { id: 't1', title: 'Curate 5 bespoke CITYMAN Extrait recommendations', completed: true },
+    { id: 't2', title: 'Confirm 4 pending flacon orders with delivery in Delhi & Mumbai', completed: true },
+    { id: 't3', title: 'Advise VIP clients on 12-hour Extrait formulation differences', completed: false },
+    { id: 't4', title: 'Follow up with dormant clients interested in Oud Royale Extrait', completed: false },
   ])
 
   useEffect(() => {
@@ -218,7 +219,7 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
           {/* Col 2: Chat */}
           <div className={`flex-1 flex-col min-w-0 border-r border-slate-100 lg:flex ${mobile === 'chat' ? 'flex w-full' : 'hidden'} lg:flex`}>
           {selected ? (
-            <ChatWindow lead={selected} quickReplies={quickReplies} onNewMessage={onNewMessage} />
+            <ChatWindow lead={selected} quickReplies={quickReplies} onNewMessage={onNewMessage} onBack={() => setMobile('leads')} />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-10 bg-slate-50/50">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#FDF6E3' }}>
@@ -278,12 +279,12 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white" style={{ background: '#0F1729' }}>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center text-white" style={{ background: '#0A0F1D' }}>
                     <CheckSquare size={16} style={{ color: '#C9A84C' }} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Personal Daily Tasks &amp; KPIs</h3>
-                    <p className="text-[11px] text-slate-400">Restricted Agent Workspace Mode</p>
+                    <h3 className="text-sm font-bold text-slate-900">B Perfume Advisor Daily Action</h3>
+                    <p className="text-[11px] text-slate-400">Exclusive Fragrance Clienteling Mode</p>
                   </div>
                 </div>
                 <button
@@ -299,25 +300,25 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
               <div className="p-4 rounded-2xl border border-slate-100 bg-slate-50/80 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Target size={14} style={{ color: '#C9A84C' }} /> My Quota &amp; SLA Performance
+                    <Target size={14} style={{ color: '#C9A84C' }} /> Flacon Sales Quota (CITYMAN &amp; Oud)
                   </span>
-                  <span className="text-[11px] font-bold text-emerald-600">78% Target Achieved</span>
+                  <span className="text-[11px] font-bold text-amber-700">82% Target Achieved</span>
                 </div>
                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '78%' }} />
+                  <div className="h-full rounded-full" style={{ width: '82%', background: '#C9A84C' }} />
                 </div>
                 <div className="grid grid-cols-3 gap-2 pt-1 text-center">
                   <div className="bg-white p-2 rounded-xl border border-slate-100">
-                    <p className="text-xs text-slate-400">Response</p>
-                    <p className="text-sm font-bold text-slate-800">3.2m</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Response</p>
+                    <p className="text-sm font-bold text-slate-800">2.4m</p>
                   </div>
                   <div className="bg-white p-2 rounded-xl border border-slate-100">
-                    <p className="text-xs text-slate-400">Calls</p>
-                    <p className="text-sm font-bold text-slate-800">14</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Consults</p>
+                    <p className="text-sm font-bold text-slate-800">28</p>
                   </div>
                   <div className="bg-white p-2 rounded-xl border border-slate-100">
-                    <p className="text-xs text-slate-400">Closed</p>
-                    <p className="text-sm font-bold text-emerald-600">6</p>
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold">Bottles Sold</p>
+                    <p className="text-sm font-bold text-amber-700">19</p>
                   </div>
                 </div>
               </div>

@@ -7,7 +7,7 @@ interface Props { phone: string; name?: string }
 export function PhoneActionBar({ phone, name }: Props) {
   const { country } = parsePhone(phone)
   const display = formatPhoneDisplay(phone)
-  const greeting = name ? `Hi ${name.split(' ')[0]}! 👋 This is MN Brand. ` : 'Hi! This is MN Brand. '
+  const greeting = name ? `Dear ${name.split(' ')[0]}, greetings from B Perfume Haute Parfumerie ⚜️ ` : 'Greetings from B Perfume Haute Parfumerie ⚜️ '
 
   return (
     <div className="rounded-2xl border border-slate-100 bg-slate-50 overflow-hidden">

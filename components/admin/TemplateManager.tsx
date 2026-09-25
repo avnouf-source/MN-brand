@@ -34,7 +34,7 @@ export function TemplateManager({ initialTemplates }: { initialTemplates: Templa
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="welcome_message"
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2" /></div>
             <div><label className="text-xs font-medium text-slate-600 mb-1 block">Body — use {'{{1}}'} for variables</label>
-              <textarea value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} rows={3} placeholder="Hi {{1}}, welcome to MN Brand..."
+              <textarea value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} rows={3} placeholder="Hi {{1}}, welcome to B Perfume Haute Parfumerie..."
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2 resize-none" /></div>
             <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
               className="px-3 py-2 rounded-xl border border-slate-200 text-sm bg-slate-50">

@@ -6,7 +6,7 @@ import { Providers } from './providers'
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
 export const viewport: Viewport = {
-  themeColor: '#0F1729',
+  themeColor: '#0A0F1D',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -14,13 +14,13 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'MN Brand — Global CRM',
-  description: 'International Lead Generation & WhatsApp CRM Platform',
+  title: 'B Perfume — Haute Parfumerie CRM',
+  description: 'International Luxury Fragrance Clienteling & WhatsApp CRM Suite',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'MN Brand CRM',
+    title: 'B Perfume CRM',
   },
 }
 

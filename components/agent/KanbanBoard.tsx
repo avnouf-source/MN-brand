@@ -15,16 +15,22 @@ interface Props {
 }
 
 const STAGES = [
-  { key: 'ALL', label: 'All' },
-  { key: 'NEW', label: 'New' },
-  { key: 'TALKING', label: 'Active' },
-  { key: 'DONE', label: 'Done' },
+  { key: 'ALL', label: 'All Inquiries' },
+  { key: 'NEW_INQUIRY', label: 'New' },
+  { key: 'SCENT_RECOMMENDATION', label: 'Consulting' },
+  { key: 'ORDER_PLACED', label: 'Orders' },
+  { key: 'SHIPPED', label: 'Shipped' },
+  { key: 'DELIVERED', label: 'Delivered' },
 ]
 
 const STAGE_DOT: Record<string, string> = {
+  NEW_INQUIRY: '#3b82f6',
   NEW: '#3b82f6',
+  SCENT_RECOMMENDATION: '#C9A84C',
   TALKING: '#C9A84C',
   ORDER_PLACED: '#8b5cf6',
+  SHIPPED: '#059669',
+  DELIVERED: '#10b981',
   DONE: '#10b981',
 }
 
@@ -41,7 +47,10 @@ export function KanbanBoard({ leads, filter, onFilterChange, onSelect, selectedI
 
   const filtered = useMemo(() => {
     return leads.filter(l => {
-      if (filter !== 'ALL' && l.stage !== filter && !(filter === 'TALKING' && l.stage === 'ORDER_PLACED')) return false
+      if (filter !== 'ALL') {
+        const normalized = l.stage === 'NEW' ? 'NEW_INQUIRY' : l.stage === 'TALKING' ? 'SCENT_RECOMMENDATION' : l.stage === 'DONE' ? 'DELIVERED' : l.stage
+        if (normalized !== filter) return false
+      }
       if (search) {
         const q = search.toLowerCase()
         if (!l.name.toLowerCase().includes(q) && !l.phone.includes(q) && !(l.company ?? '').toLowerCase().includes(q)) return false
@@ -65,14 +74,14 @@ export function KanbanBoard({ leads, filter, onFilterChange, onSelect, selectedI
               setSearch(e.target.value)
               setDisplayLimit(50)
             }}
-            placeholder="Search 2,000+ leads..."
+            placeholder="Search 5,000+ Indian perfume clients..."
             className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:outline-none focus:ring-2 placeholder-slate-400"
             style={{ '--tw-ring-color': '#C9A84C' } as any}
           />
         </div>
         <div className="flex items-center justify-between text-[10px] text-slate-400 px-1 mt-1.5 font-medium">
-          <span>Showing {displayed.length} of {filtered.length} leads</span>
-          {leads.length >= 2000 && <span className="text-emerald-600 font-semibold">⚡ 2,000+ Populated</span>}
+          <span>Showing {displayed.length} of {filtered.length} clients</span>
+          {leads.length >= 2000 && <span className="text-amber-700 font-semibold">✨ 5,000 Client Portfolio</span>}
         </div>
       </div>
 

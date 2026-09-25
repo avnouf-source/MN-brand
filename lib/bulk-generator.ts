@@ -1,39 +1,48 @@
-import { COUNTRIES } from './countries'
+// B Perfume Haute Parfumerie Bulk Generator
+// 8 Sales Agents & 5,000 Indian (+91) Demo Leads
 
-const FIRST_NAMES = [
-  'Alexander', 'Sarah', 'Mohammed', 'Elena', 'Lucas', 'Fatima', 'David', 'Chloe', 'Omar', 'Yuki',
-  'Carlos', 'Amira', 'James', 'Aya', 'Matteo', 'Liam', 'Zainab', 'Noah', 'Camila', 'Tariq',
-  'Oliver', 'Sophia', 'Hassan', 'Isabella', 'William', 'Layla', 'Benjamin', 'Mia', 'Ali', 'Emma',
-  'Mason', 'Harper', 'Ibrahim', 'Evelyn', 'Elijah', 'Abigail', 'Yusuf', 'Emily', 'Daniel', 'Avery',
-  'Sebastian', 'Ella', 'Jackson', 'Scarlett', 'Aiden', 'Grace', 'Matthew', 'Lily', 'Samuel', 'Chloe'
+const INDIAN_FIRST_NAMES = [
+  'Aarav', 'Priya', 'Rohan', 'Ananya', 'Vikram', 'Pooja', 'Rajesh', 'Sneha',
+  'Aditya', 'Kavita', 'Arjun', 'Meera', 'Siddharth', 'Divya', 'Kabir', 'Ishaan',
+  'Nisha', 'Rahul', 'Simran', 'Karan', 'Tanvi', 'Manish', 'Neha', 'Gaurav',
+  'Shreya', 'Amit', 'Rhea', 'Dev', 'Anushka', 'Vivek', 'Ritu', 'Sameer',
+  'Pallavi', 'Akash', 'Swati', 'Harsh', 'Isha', 'Varun', 'Deepika', 'Kunal',
+  'Pooja', 'Nikhil', 'Sunita', 'Pranav', 'Payal', 'Yash', 'Shruti', 'Alok'
 ]
 
-const LAST_NAMES = [
-  'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez',
-  'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin',
-  'Lee', 'Perez', 'Thompson', 'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson',
-  'Walker', 'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
-  'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell', 'Carter', 'Roberts'
+const INDIAN_LAST_NAMES = [
+  'Sharma', 'Patel', 'Verma', 'Iyer', 'Mehta', 'Nair', 'Gupta', 'Mukherjee',
+  'Reddy', 'Singh', 'Malhotra', 'Joshi', 'Chopra', 'Rao', 'Bose', 'Kapoor',
+  'Deshmukh', 'Menon', 'Bhatia', 'Saxena', 'Kulkarni', 'Agarwal', 'Chatterjee',
+  'Choudhury', 'Sen', 'Pillai', 'Singhania', 'Mittal', 'Pandey', 'Dutta',
+  'Goswami', 'Acharya', 'Trivedi', 'Thakur', 'Bhardwaj', 'Mishra', 'Shetty'
 ]
 
-const COMPANY_PREFIXES = ['Apex', 'Vertex', 'Starlight', 'Horizon', 'Global', 'Prime', 'Omni', 'Nexus', 'Vanguard', 'Beacon']
-const COMPANY_SUFFIXES = ['Ventures', 'Holdings', 'Capital', 'Group', 'Enterprises', 'Logistics', 'Solutions', 'Investments', 'Technologies', 'Consulting']
-
-const REQUIREMENTS = [
-  'B2B international lead generation campaign for European market',
-  'Automated WhatsApp CRM workflow setup and team onboarding',
-  'Real estate investor acquisition pipeline across GCC and UAE',
-  'Outbound marketing automation and customer support delegation',
-  'High-ticket coaching client acquisition and WhatsApp qualification',
-  'Enterprise CRM migration with customized multi-country dialing',
-  'E-commerce customer retention & abandoned cart WhatsApp reminders',
-  'Fintech product launch and international partner outreach'
+const INDIAN_CITIES = [
+  'Mumbai', 'Delhi NCR', 'Bengaluru', 'Hyderabad', 'Chennai', 'Kolkata',
+  'Pune', 'Ahmedabad', 'Jaipur', 'Chandigarh', 'Kochi', 'Surat', 'Lucknow', 'Indore'
 ]
 
-const SOURCES = ['LinkedIn', 'WhatsApp', 'Instagram', 'Website', 'Referral', 'TikTok', 'Trade Show']
-const STAGES = ['NEW', 'TALKING', 'ORDER_PLACED', 'DONE']
+export const PERFUME_PRODUCTS = [
+  'CITYMAN Extrait de Parfum (100ml / 12-Hour Long-Lasting)',
+  'Oud Royale Extrait (50ml / 12-Hour Pure Oud)',
+  'Velvet Rose Pour Femme (100ml / 12-Hour Luxury)',
+  'Amber Blanc Luxury Edition (100ml / Extrait)',
+  'Santal Imperial Unisex (100ml / 12-Hour)',
+  'Citrus Riviera Extrait (100ml / Fresh Unisex)',
+]
+
+export const PERFUME_STAGES = [
+  'NEW_INQUIRY',
+  'SCENT_RECOMMENDATION',
+  'ORDER_PLACED',
+  'SHIPPED',
+  'DELIVERED',
+] as const
+
 const TAGS = ['HOT', 'WARM', 'COLD', 'NONE']
 const STATUSES = ['OPEN', 'WAITING', 'UNREAD', 'CLOSED']
+const SOURCES = ['WhatsApp Direct', 'Instagram Luxury Ad', 'B Perfume Boutique', 'VIP Referral', 'Website Consultation']
 
 export interface GeneratedLead {
   id: string
@@ -46,20 +55,13 @@ export interface GeneratedLead {
   stage: string
   tag: string
   conversationStatus: string
+  country?: string
   assignedAgentId?: string
   assignedAgent?: { id: string; name: string }
   updatedAt: string
   conversation?: {
     id: string
-    messages: {
-      id: string
-      body: string
-      direction: string
-      type: string
-      senderType: string
-      isRead: boolean
-      createdAt: string
-    }[]
+    messages: any[]
   }
 }
 
@@ -69,98 +71,97 @@ export interface GeneratedAgent {
   email: string
   department: string
   status: string
+  role?: string
   _count: { assignedLeads: number }
 }
 
-export function generate50Agents(): GeneratedAgent[] {
-  const departments = ['Sales', 'Business Dev', 'Enterprise', 'Support', 'VIP Accounts']
-  const agents: GeneratedAgent[] = []
+// Exactly 8 Sales Agents for B Perfume
+export const B_PERFUME_8_AGENTS: { id: string; name: string; email: string; department: string }[] = [
+  { id: 'agent-bperfume-1', name: 'Sara Al-Hashimi', email: 'sara@bperfume.com', department: 'Women Fragrance Curation' },
+  { id: 'agent-bperfume-2', name: 'Karim Mansour', email: 'karim@bperfume.com', department: 'Signature Scents (CITYMAN)' },
+  { id: 'agent-bperfume-3', name: 'Layla Vance', email: 'layla@bperfume.com', department: 'Private Client Scent Stylist' },
+  { id: 'agent-bperfume-4', name: 'Zayd Al-Otaibi', email: 'zayd@bperfume.com', department: 'Oriental & Oud Parfums' },
+  { id: 'agent-bperfume-5', name: 'Maya Sharma', email: 'maya@bperfume.com', department: 'India & South Asia VIP' },
+  { id: 'agent-bperfume-6', name: 'Rohan Verma', email: 'rohan@bperfume.com', department: 'Luxury Scent Concierge' },
+  { id: 'agent-bperfume-7', name: 'Ananya Iyer', email: 'ananya@bperfume.com', department: 'Bespoke Haute Parfumerie' },
+  { id: 'agent-bperfume-8', name: 'Vikram Patel', email: 'vikram@bperfume.com', department: 'Extrait Prestige Sales' },
+]
 
-  for (let i = 1; i <= 50; i++) {
-    const fn = FIRST_NAMES[i % FIRST_NAMES.length]
-    const ln = LAST_NAMES[(i * 3) % LAST_NAMES.length]
-    const name = `${fn} ${ln}`
-    const email = `${fn.toLowerCase()}.${ln.toLowerCase()}${i}@mnbrand.com`
-    const dept = departments[i % departments.length]
-
-    agents.push({
-      id: `agent-mn-${i}`,
-      name,
-      email,
-      department: dept,
-      status: i % 4 === 0 ? 'OFFLINE' : 'ONLINE',
-      _count: { assignedLeads: 0 },
-    })
-  }
-
-  return agents
+export function generate8PerfumeAgents(): GeneratedAgent[] {
+  return B_PERFUME_8_AGENTS.map((a, i) => ({
+    id: a.id,
+    name: a.name,
+    email: a.email,
+    department: a.department,
+    status: i % 4 === 0 ? 'OFFLINE' : 'ONLINE',
+    role: 'AGENT',
+    _count: { assignedLeads: 625 }, // 5000 / 8 = 625
+  }))
 }
 
-export function generate2000Leads(agents?: GeneratedAgent[]): GeneratedLead[] {
-  const leads: GeneratedLead[] = []
-  const agentList = agents && agents.length > 0 ? agents : generate50Agents()
+// Backward compatibility alias
+export function generate50Agents(): GeneratedAgent[] {
+  return generate8PerfumeAgents()
+}
 
-  for (let i = 1; i <= 2000; i++) {
-    const country = COUNTRIES[i % COUNTRIES.length]
-    const fn = FIRST_NAMES[(i * 7) % FIRST_NAMES.length]
-    const ln = LAST_NAMES[(i * 11) % LAST_NAMES.length]
+// Generate exactly 5,000 Indian Leads (+91) with fresh clean chat history
+export function generate5000IndianLeads(agents?: GeneratedAgent[]): GeneratedLead[] {
+  const agentList = agents && agents.length > 0 ? agents : generate8PerfumeAgents()
+  const leads: GeneratedLead[] = []
+
+  // Prefixes common in Indian mobile carriers (98, 97, 99, 96, 95, 94, 93, 91, 88, 70)
+  const carrierPrefixes = ['9820', '9811', '9845', '9830', '9880', '9900', '9711', '9822', '9890', '9740']
+
+  for (let i = 1; i <= 5000; i++) {
+    const fn = INDIAN_FIRST_NAMES[(i * 7) % INDIAN_FIRST_NAMES.length]
+    const ln = INDIAN_LAST_NAMES[(i * 11) % INDIAN_LAST_NAMES.length]
+    const city = INDIAN_CITIES[(i * 3) % INDIAN_CITIES.length]
     const name = `${fn} ${ln}`
-    const rawNumber = 10000000 + ((i * 987654) % 89999999)
-    const phone = `${country.dial}${rawNumber}`
-    const comp = `${COMPANY_PREFIXES[i % COMPANY_PREFIXES.length]} ${COMPANY_SUFFIXES[(i * 2) % COMPANY_SUFFIXES.length]}`
-    const req = REQUIREMENTS[i % REQUIREMENTS.length]
-    const stage = STAGES[i % STAGES.length]
+    
+    // Strict Indian Phone Number: +91 + 10 digits
+    const prefix = carrierPrefixes[i % carrierPrefixes.length]
+    const suffix = String(100000 + ((i * 49157) % 899999)).padStart(6, '0')
+    const phone = `+91${prefix}${suffix}`
+
+    const product = PERFUME_PRODUCTS[i % PERFUME_PRODUCTS.length]
+    const stage = PERFUME_STAGES[i % PERFUME_STAGES.length]
     const tag = TAGS[i % TAGS.length]
     const status = STATUSES[i % STATUSES.length]
     const source = SOURCES[i % SOURCES.length]
 
-    // Equal assignment: 2000 leads / 50 agents = 40 leads per agent
+    // Equal round-robin distribution: 5000 / 8 = 625 per agent
     const assignedAgent = agentList[(i - 1) % agentList.length]
     if (assignedAgent) {
-      assignedAgent._count.assignedLeads++
+      assignedAgent._count.assignedLeads = (assignedAgent._count.assignedLeads || 0) + 1
     }
 
-    const messages = [
-      {
-        id: `msg-${i}-1`,
-        body: `Inquiry regarding: ${req}. Please share your business proposal.`,
-        direction: 'INBOUND',
-        type: 'TEXT',
-        senderType: 'customer',
-        isRead: status !== 'UNREAD',
-        createdAt: new Date(Date.now() - (i % 48) * 3600000).toISOString(),
-      },
-      {
-        id: `msg-${i}-2`,
-        body: `Hi ${fn}! Thank you for reaching out to MN Brand. A dedicated manager from our ${assignedAgent?.department || 'Sales'} division is on it.`,
-        direction: 'OUTBOUND',
-        type: 'BOT',
-        senderType: 'bot',
-        isRead: true,
-        createdAt: new Date(Date.now() - ((i % 48) * 3600000) + 60000).toISOString(),
-      }
-    ]
-
     leads.push({
-      id: `lead-bulk-${i}`,
+      id: `lead-in-${i}`,
       name,
       phone,
-      email: `${fn.toLowerCase()}.${ln.toLowerCase()}@${comp.toLowerCase().replace(/\s+/g, '')}.com`,
-      company: comp,
-      businessRequirement: req,
+      email: `${fn.toLowerCase()}.${ln.toLowerCase()}${i % 100}@gmail.com`,
+      company: `Client · ${city}`,
+      businessRequirement: `Requested consultation for ${product}`,
       leadSource: source,
       stage,
       tag,
       conversationStatus: status,
+      country: 'IN',
       assignedAgentId: assignedAgent?.id,
       assignedAgent: assignedAgent ? { id: assignedAgent.id, name: assignedAgent.name } : undefined,
       updatedAt: new Date(Date.now() - (i % 72) * 3600000).toISOString(),
+      // Clean fresh chat history: Zero old messages as requested!
       conversation: {
-        id: `conv-bulk-${i}`,
-        messages,
+        id: `conv-in-${i}`,
+        messages: [],
       }
     })
   }
 
   return leads
+}
+
+// Backward compatibility alias
+export function generate2000Leads(agents?: GeneratedAgent[]): GeneratedLead[] {
+  return generate5000IndianLeads(agents)
 }

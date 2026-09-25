@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Sparkles, Users, Bot, FileText, Settings, MessageCircle, ClipboardList, ShieldCheck } from 'lucide-react'
-import { MNLogo } from '@/components/shared/MNLogo'
+import { BPerfumeLogo } from '@/components/shared/BPerfumeLogo'
 
 const NAV = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,17 +18,16 @@ const NAV = [
 export function AdminSidebar() {
   const path = usePathname()
   return (
-    <div className="w-60 flex-shrink-0 flex flex-col h-full" style={{ background: '#0F1729' }}>
+    <div className="w-60 flex-shrink-0 flex flex-col h-full" style={{ background: '#0A0F1D' }}>
       {/* Logo */}
       <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
         <div className="flex items-center gap-3">
-          <MNLogo size="sm" variant="dark" />
+          <BPerfumeLogo size="sm" variant="dark" />
           <div>
-            <div className="flex items-baseline gap-0.5">
-              <span className="text-sm font-extrabold text-white">MN</span>
-              <span className="text-sm font-extrabold" style={{ color: '#C9A84C' }}>Brand</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-sm font-bold text-white tracking-wider font-serif">B PERFUME</span>
             </div>
-            <p className="text-[8px] font-semibold tracking-widest uppercase opacity-40 text-white">Global CRM</p>
+            <p className="text-[8px] font-semibold tracking-widest uppercase text-amber-300/80">Haute Parfumerie</p>
           </div>
         </div>
       </div>
