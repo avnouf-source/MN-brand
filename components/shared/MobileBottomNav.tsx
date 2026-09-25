@@ -13,7 +13,8 @@ import {
 } from 'lucide-react'
 
 export function MobileBottomNav() {
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  const pathname = rawPathname || ''
   const isAdmin = pathname.startsWith('/admin')
 
   function handleOpenDrawer() {

@@ -152,21 +152,19 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
     }
   }
 
-  async function sendVoiceNote(audioBlob: Blob, durationSec: number) {
+  async function sendVoiceNote(duration: string) {
     setIsRecordingVoice(false)
-    const audioUrl = URL.createObjectURL(audioBlob)
 
     const voiceMsg: Message = {
       id: Date.now().toString(),
-      body: `🎙️ Voice Note (${durationSec}s)`,
+      body: `🎙️ Voice Note (${duration})`,
       direction: 'OUTBOUND',
       type: 'MEDIA',
       senderType: 'agent',
       createdAt: new Date().toISOString(),
       isRead: false,
     }
-    ;(voiceMsg as any).mediaUrl = audioUrl
-    ;(voiceMsg as any).duration = durationSec
+    ;(voiceMsg as any).duration = duration
 
     onNewMessage(lead.id, voiceMsg)
 
@@ -176,9 +174,8 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leadId: lead.id,
-          body: `🎙️ Voice Note (${durationSec}s)`,
+          body: `🎙️ Voice Note (${duration})`,
           type: 'MEDIA',
-          mediaUrl: audioUrl,
         }),
       })
     } catch {}
@@ -379,10 +376,9 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
               <div key={m.id} className={`flex ${m.direction === 'OUTBOUND' ? 'justify-end' : 'justify-start'}`}>
                 {m.type === 'MEDIA' ? (
                   <VoiceNoteBubble
-                    mediaUrl={(m as any).mediaUrl || ''}
-                    duration={(m as any).duration || 12}
+                    duration={typeof (m as any).duration === 'string' ? (m as any).duration : '0:14'}
                     direction={m.direction as any}
-                    createdAt={m.createdAt}
+                    timestamp={m.createdAt}
                   />
                 ) : m.type === 'NOTE' ? (
                   <div className="max-w-xs rounded-2xl p-3 border" style={{ background: '#FDF6E3', borderColor: '#E8D5A0' }}>

@@ -110,7 +110,7 @@ export function KanbanBoard({ leads, filter, onFilterChange, onSelect, selectedI
       <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
         {displayed.map(lead => {
           const { country } = parsePhone(lead.phone)
-          const localTime = getCountryLocalTime(country?.code)
+          const localTime = getCountryLocalTime(country ?? lead.phone)
           const score = calculatePredictiveScore(lead)
           const msgs = lead.conversation?.messages ?? []
           const lastMsg = msgs[msgs.length - 1]
@@ -166,9 +166,9 @@ export function KanbanBoard({ leads, filter, onFilterChange, onSelect, selectedI
                     <span
                       className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
                       style={{ background: localTime.bg, color: localTime.color }}
-                      title={`${localTime.timezoneName} · ${localTime.status === 'CLIENT_SLEEPING' ? 'Client Sleeping' : 'Business Hours'}`}
+                      title={`${localTime.timezoneName} · ${localTime.status === 'SLEEP_HOURS' ? 'Client Sleeping' : 'Business Hours'}`}
                     >
-                      {localTime.status === 'CLIENT_SLEEPING' ? '🌙' : '🟢'} {localTime.timeString}
+                      {localTime.status === 'SLEEP_HOURS' ? '🌙' : '🟢'} {localTime.timeString}
                     </span>
                   </div>
 

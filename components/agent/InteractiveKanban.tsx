@@ -115,7 +115,7 @@ export function InteractiveKanban({ leads, onSelect, selectedId, onUpdate }: Pro
               <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
                 {colLeads.map(lead => {
                   const { country } = parsePhone(lead.phone)
-                  const localTime = getCountryLocalTime(country?.code)
+                  const localTime = getCountryLocalTime(country ?? lead.phone)
                   const score = calculatePredictiveScore(lead)
                   const tagStyle = TAG_COLORS[lead.tag] || TAG_COLORS.NONE
                   const isSelected = selectedId === lead.id
@@ -178,9 +178,9 @@ export function InteractiveKanban({ leads, onSelect, selectedId, onUpdate }: Pro
                         <span
                           className="text-[9px] px-1.5 py-0.2 rounded-full font-medium"
                           style={{ background: localTime.bg, color: localTime.color }}
-                          title={`${localTime.timezoneName} · ${localTime.status === 'CLIENT_SLEEPING' ? 'Client Sleeping' : 'Business Hours'}`}
+                          title={`${localTime.timezoneName} · ${localTime.status === 'SLEEP_HOURS' ? 'Client Sleeping' : 'Business Hours'}`}
                         >
-                          {localTime.status === 'CLIENT_SLEEPING' ? '🌙' : '🟢'} {localTime.timeString}
+                          {localTime.status === 'SLEEP_HOURS' ? '🌙' : '🟢'} {localTime.timeString}
                         </span>
                       </div>
 

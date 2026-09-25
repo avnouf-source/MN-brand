@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard'
-import { generate2000Leads, generate50Agents } from '@/lib/bulk-generator'
+import { generate2000Leads, generate8PerfumeAgents } from '@/lib/bulk-generator'
 
 export const dynamic = 'force-dynamic'
 

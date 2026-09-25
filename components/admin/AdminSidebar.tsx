@@ -29,7 +29,8 @@ const NAV = [
 ]
 
 export function AdminSidebar() {
-  const path = usePathname()
+  const rawPath = usePathname()
+  const path = rawPath || ''
   const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
