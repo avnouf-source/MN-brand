@@ -6,6 +6,7 @@ import { VoiceNoteBubble } from './VoiceNoteBubble'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
 import { WhatsAppInvoiceModal } from './WhatsAppInvoiceModal'
 import { PerfumeCheatSheetCard } from './PerfumeCheatSheetCard'
+import { QuickLuxuryRepliesMenu } from './QuickLuxuryRepliesMenu'
 import { OFFICIAL_PERFUME_CATALOG, PerfumeProduct, findPerfumeByText } from '@/lib/products'
 import type { Lead, Message, QuickReply } from './AgentWorkspace'
 import { formatPhoneDisplay, parsePhone, waLink, telLink, getCountryLocalTime } from '@/lib/countries'
@@ -65,6 +66,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
   const [detectedPerfume, setDetectedPerfume] = useState<PerfumeProduct | null>(null)
   const [showInvoiceModal, setShowInvoiceModal] = useState(false)
   const [invoiceTargetProduct, setInvoiceTargetProduct] = useState<PerfumeProduct | null>(null)
+  const [showLuxuryMenu, setShowLuxuryMenu] = useState(false)
   const btm = useRef<HTMLDivElement>(null)
   const msgs = lead.conversation?.messages ?? []
   const offline = isUserOffline(msgs)
@@ -119,14 +121,17 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
     setInput(template)
   }
 
-  async function send() {
-    if (!input.trim() || sending) return
+  async function send(customBody?: string) {
+    const textToSend = typeof customBody === 'string' ? customBody : input.trim()
+    if (!textToSend || sending) return
     setSending(true)
-    const body = input.trim(); setInput(''); setShowQR(false)
-    const tmp: Message = { id: Date.now().toString(), body, direction: 'OUTBOUND', type: 'TEXT', senderType: 'agent', createdAt: new Date().toISOString(), isRead: false }
+    setInput('')
+    setShowQR(false)
+    setShowLuxuryMenu(false)
+    const tmp: Message = { id: Date.now().toString(), body: textToSend, direction: 'OUTBOUND', type: 'TEXT', senderType: 'agent', createdAt: new Date().toISOString(), isRead: false }
     onNewMessage(lead.id, tmp)
     try {
-      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leadId: lead.id, body, type: 'TEXT' }) })
+      await fetch('/api/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leadId: lead.id, body: textToSend, type: 'TEXT' }) })
     } finally { setSending(false) }
   }
 
@@ -429,15 +434,43 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
         <div className="relative">
           {showQR && <QuickRepliesPopup quickReplies={quickReplies} onSelect={onQR} />}
 
+          {/* Quick Luxury Reply Popup Menu (⚡) */}
+          <QuickLuxuryRepliesMenu
+            isOpen={showLuxuryMenu}
+            onClose={() => setShowLuxuryMenu(false)}
+            onSelect={(body, sendImmediately) => {
+              if (sendImmediately) {
+                send(body)
+              } else {
+                setInput(body)
+              }
+            }}
+          />
+
           {isRecordingVoice ? (
             <VoiceNoteRecorder
               onSend={sendVoiceNote}
               onCancel={() => setIsRecordingVoice(false)}
             />
           ) : (
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-1.5 sm:gap-2">
+              {/* Attach File Button */}
               <button className="p-2 rounded-xl hover:bg-slate-100 text-slate-400 transition flex-shrink-0" title="Attach file">
                 <Paperclip size={16} />
+              </button>
+
+              {/* ⚡ Quick Luxury Reply Integration Button */}
+              <button
+                type="button"
+                onClick={() => setShowLuxuryMenu(prev => !prev)}
+                className={`p-2 rounded-xl border transition flex-shrink-0 active:scale-95 flex items-center justify-center ${
+                  showLuxuryMenu
+                    ? 'bg-amber-400 border-amber-500 text-slate-900 shadow-xs'
+                    : 'bg-amber-50/80 border-amber-300/80 hover:bg-amber-100 text-amber-700'
+                }`}
+                title="Quick Luxury Replies (⚡)"
+              >
+                <Zap size={16} className={showLuxuryMenu ? 'fill-slate-900 text-slate-900' : 'fill-amber-500 text-amber-600'} />
               </button>
 
               <div className="flex-1 relative">
@@ -445,9 +478,9 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
                   value={input}
                   onChange={e => onInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-                  placeholder="Type fragrance advice... (/ for quick replies)"
+                  placeholder="Type fragrance advice... (/ or ⚡ for luxury replies)"
                   rows={1}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm bg-slate-50 focus:outline-none focus:ring-2 resize-none placeholder-slate-400"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 text-xs sm:text-sm bg-slate-50 focus:outline-hidden focus:ring-2 resize-none placeholder-slate-400"
                   style={{ '--tw-ring-color': '#C9A84C', minHeight: 42 } as any}
                 />
               </div>
@@ -465,7 +498,7 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
               {/* Send Button */}
               <button
                 type="button"
-                onClick={send}
+                onClick={() => send()}
                 disabled={!input.trim() || sending}
                 className="p-2.5 rounded-xl text-white transition disabled:opacity-40 flex-shrink-0 shadow-xs active:scale-95 cursor-pointer"
                 style={{ background: '#0A0F1D' }}

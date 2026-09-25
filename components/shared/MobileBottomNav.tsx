@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
@@ -16,6 +17,7 @@ export function MobileBottomNav() {
   const rawPathname = usePathname()
   const pathname = rawPathname || ''
   const isAdmin = pathname.startsWith('/admin')
+  const [activeAgentTab, setActiveAgentTab] = useState<'chats' | 'leads'>('chats')
 
   function handleOpenDrawer() {
     window.dispatchEvent(new CustomEvent('bperfume:toggle-mobile-menu'))
@@ -25,7 +27,10 @@ export function MobileBottomNav() {
     window.dispatchEvent(new CustomEvent('mn:open-global-dialer'))
   }
 
-  function handleSwitchAgentTab(tab: string) {
+  function handleSwitchAgentTab(tab: 'chats' | 'leads' | 'tasks') {
+    if (tab === 'chats' || tab === 'leads') {
+      setActiveAgentTab(tab)
+    }
     window.dispatchEvent(new CustomEvent('bperfume:agent-tab', { detail: { tab } }))
   }
 
@@ -104,19 +109,20 @@ export function MobileBottomNav() {
             {/* Agent Tab 1: Chats */}
             <button
               type="button"
-              onClick={() => handleSwitchAgentTab('chat')}
+              onClick={() => handleSwitchAgentTab('chats')}
               className="flex flex-col items-center justify-center flex-1 py-1 transition"
-              style={{ color: '#C9A84C' }}
+              style={{ color: activeAgentTab === 'chats' ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)' }}
             >
               <MessageCircle size={18} />
               <span className="text-[10px] font-medium mt-1">Chats</span>
             </button>
 
-            {/* Agent Tab 2: Leads List */}
+            {/* Agent Tab 2: Leads & Pipeline Dashboard */}
             <button
               type="button"
               onClick={() => handleSwitchAgentTab('leads')}
-              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-amber-400"
+              className="flex flex-col items-center justify-center flex-1 py-1 transition"
+              style={{ color: activeAgentTab === 'leads' ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)' }}
             >
               <Users size={18} />
               <span className="text-[10px] font-medium mt-1">Leads</span>
