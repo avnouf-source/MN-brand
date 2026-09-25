@@ -64,3 +64,19 @@ div:has(> a[href*="netlify.com"]) {
   clip-path: inset(50%) !important;
   z-index: -99999 !important;
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  header, nav, aside, .mobile-bottom-nav, button {
+    display: none !important;
+  }
+  .printable-dossier {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+}

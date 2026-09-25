@@ -1,6 +1,6 @@
 'use client'
 import { signOut } from 'next-auth/react'
-import { Bell, ChevronDown, LogOut, Shield } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Shield, Menu } from 'lucide-react'
 import { useState } from 'react'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
@@ -8,9 +8,22 @@ interface Props { user: { name?: string; email?: string; role?: string } }
 
 export function AdminTopBar({ user }: Props) {
   const [open, setOpen] = useState(false)
+
+  function handleToggleMobileMenu() {
+    window.dispatchEvent(new CustomEvent('bperfume:toggle-mobile-menu'))
+  }
+
   return (
-    <header className="h-14 bg-white border-b border-slate-100 px-6 flex items-center justify-between flex-shrink-0">
+    <header className="h-14 bg-white border-b border-slate-100 px-4 sm:px-6 flex items-center justify-between flex-shrink-0 z-10">
       <div className="flex items-center gap-2.5">
+        <button
+          type="button"
+          onClick={handleToggleMobileMenu}
+          className="md:hidden p-1.5 -ml-1 rounded-xl text-slate-700 hover:bg-slate-100 transition"
+          aria-label="Open Navigation Menu"
+        >
+          <Menu size={20} />
+        </button>
         <span
           style={{
             color: '#0A0F1D',
@@ -21,8 +34,8 @@ export function AdminTopBar({ user }: Props) {
         >
           B Perfume
         </span>
-        <span className="text-slate-300">/</span>
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Executive Admin</span>
+        <span className="text-slate-300 hidden sm:inline">/</span>
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:inline">Executive Admin</span>
       </div>
       <div className="flex items-center gap-3">
         <ThemeToggle />

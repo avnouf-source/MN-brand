@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
 import { Bell, ChevronDown, LogOut, Shield, Globe, PhoneCall } from 'lucide-react'
 import Link from 'next/link'
@@ -22,6 +22,14 @@ export function AgentTopBar({ user }: Props) {
       body: JSON.stringify({ status: next ? 'ONLINE' : 'OFFLINE' }),
     })
   }
+
+  useEffect(() => {
+    function handleOpenDialer() {
+      setDialerOpen(true)
+    }
+    window.addEventListener('mn:open-global-dialer', handleOpenDialer)
+    return () => window.removeEventListener('mn:open-global-dialer', handleOpenDialer)
+  }, [])
 
   function handleSaveAsLeadFromDialer(phoneNumber: string) {
     // Dispatch a window custom event to open lead modal with prefilled phone

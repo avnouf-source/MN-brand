@@ -57,8 +57,22 @@ export function AgentWorkspace({ initialLeads, agents, quickReplies, currentUser
       }
       setShowModal(true)
     }
+    function handleAgentTab(e: any) {
+      const tab = e?.detail?.tab
+      if (tab === 'chat') {
+        setMobile('chat')
+      } else if (tab === 'leads') {
+        setMobile('leads')
+      } else if (tab === 'tasks') {
+        setShowTasksDrawer(true)
+      }
+    }
     window.addEventListener('mn:open-lead-modal', handleOpenLeadModal)
-    return () => window.removeEventListener('mn:open-lead-modal', handleOpenLeadModal)
+    window.addEventListener('bperfume:agent-tab', handleAgentTab)
+    return () => {
+      window.removeEventListener('mn:open-lead-modal', handleOpenLeadModal)
+      window.removeEventListener('bperfume:agent-tab', handleAgentTab)
+    }
   }, [])
 
   useEffect(() => {

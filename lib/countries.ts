@@ -158,21 +158,26 @@ export interface CurrencyConfig {
   code: string
   symbol: string
   name: string
+  rateAgainstINR: number
   rateAgainstUSD: number
 }
 
 export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
-  { code: 'USD', symbol: '$', name: 'US Dollar', rateAgainstUSD: 1.0 },
-  { code: 'EUR', symbol: '€', name: 'Euro', rateAgainstUSD: 0.92 },
-  { code: 'GBP', symbol: '£', name: 'British Pound', rateAgainstUSD: 0.79 },
-  { code: 'AED', symbol: 'AED ', name: 'UAE Dirham', rateAgainstUSD: 3.67 },
-  { code: 'SAR', symbol: 'SAR ', name: 'Saudi Riyal', rateAgainstUSD: 3.75 },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee', rateAgainstINR: 1.0, rateAgainstUSD: 83.5 },
+  { code: 'USD', symbol: '$', name: 'US Dollar', rateAgainstINR: 0.012, rateAgainstUSD: 1.0 },
+  { code: 'AED', symbol: 'AED ', name: 'UAE Dirham', rateAgainstINR: 0.044, rateAgainstUSD: 3.67 },
+  { code: 'SAR', symbol: 'SAR ', name: 'Saudi Riyal', rateAgainstINR: 0.045, rateAgainstUSD: 3.75 },
+  { code: 'EUR', symbol: '€', name: 'Euro', rateAgainstINR: 0.011, rateAgainstUSD: 0.92 },
+  { code: 'GBP', symbol: '£', name: 'British Pound', rateAgainstINR: 0.0095, rateAgainstUSD: 0.79 },
 ]
 
-export function formatCurrencyValue(amountUSD: number, currencyCode: string = 'USD'): string {
+export function formatCurrencyValue(amountINR: number, currencyCode: string = 'INR'): string {
   const curr = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode) ?? SUPPORTED_CURRENCIES[0]
-  const converted = Math.round(amountUSD * curr.rateAgainstUSD)
-  return `${curr.symbol}${converted.toLocaleString()}`
+  if (curr.code === 'INR') {
+    return `${curr.symbol}${Math.round(amountINR).toLocaleString('en-IN')}`
+  }
+  const converted = Math.round(amountINR * curr.rateAgainstINR)
+  return `${curr.symbol}${converted.toLocaleString('en-US')}`
 }
 
 export function waLink(phone: string, message = ''): string {

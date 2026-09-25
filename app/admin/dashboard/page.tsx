@@ -22,9 +22,9 @@ export default async function DashboardPage() {
     console.warn('[Admin Dashboard] Database query failed, using 2,000+ demo data:', err)
   }
 
-  // Pre-load 2,000 leads & 50 agents if database is sparse
+  // Pre-load 5,000 leads & 8 advisors if database is sparse
   if (leads.length < 100) {
-    const bulkAgents = generate50Agents()
+    const bulkAgents = generate8PerfumeAgents()
     const bulkLeads = generate2000Leads(bulkAgents)
     leads = bulkLeads
     users = bulkAgents
