@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Search, Pencil, Trash2, Key, Loader2, Zap, Users, CheckCircle2, Download, Crown, Shield, Sparkles } from 'lucide-react'
 import { generate8PerfumeAgents } from '@/lib/bulk-generator'
+import { useDebounce } from '@/lib/hooks/useDebounce'
 
 interface Agent {
   id: string
@@ -25,6 +26,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
     return generate8PerfumeAgents()
   })
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
   const [modal, setModal] = useState<'add' | 'edit' | 'reset' | null>(null)
   const [selected, setSelected] = useState<Agent | null>(null)
   const [loading, setLoading] = useState(false)
@@ -35,13 +37,21 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
   const [page, setPage] = useState(1)
   const pageSize = 10
 
-  const filtered = agents.filter(
-    a => a.name.toLowerCase().includes(search.toLowerCase()) ||
-         a.email.toLowerCase().includes(search.toLowerCase()) ||
-         (a.department ?? '').toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = useMemo(() => {
+    if (!debouncedSearch.trim()) return agents
+    const q = debouncedSearch.toLowerCase().trim()
+    return agents.filter(
+      a =>
+        a.name.toLowerCase().includes(q) ||
+        a.email.toLowerCase().includes(q) ||
+        (a.department ?? '').toLowerCase().includes(q)
+    )
+  }, [agents, debouncedSearch])
 
-  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize)
+  const paginated = useMemo(() => {
+    return filtered.slice((page - 1) * pageSize, page * pageSize)
+  }, [filtered, page, pageSize])
+
   const totalPages = Math.ceil(filtered.length / pageSize)
 
   async function handleAutoDistribute() {

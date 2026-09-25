@@ -1,6 +1,20 @@
+import nextDynamic from 'next/dynamic'
 import { prisma } from '@/lib/prisma'
-import { AnalyticsDashboard } from '@/components/admin/AnalyticsDashboard'
 import { generate2000Leads, generate8PerfumeAgents } from '@/lib/bulk-generator'
+
+const AnalyticsDashboard = nextDynamic(
+  () => import('@/components/admin/AnalyticsDashboard').then(m => m.AnalyticsDashboard),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center p-16 text-slate-400">
+        <div className="text-center space-y-2">
+          <div className="w-8 h-8 rounded-full border-2 border-slate-300 border-t-amber-500 animate-spin mx-auto" />
+          <p className="text-xs font-medium">Loading Executive Analytics...</p>
+        </div>
+      </div>
+    ),
+  }
+)
 
 export const dynamic = 'force-dynamic'
 

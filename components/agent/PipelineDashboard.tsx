@@ -1,5 +1,5 @@
 'use client'
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 import { MessageCircle, Clock, Bell, CheckCircle2, Users, TrendingUp, Activity } from 'lucide-react'
 import type { Lead } from './AgentWorkspace'
 
@@ -29,15 +29,20 @@ export function getConvStatus(lead: Lead): string {
   return lead.conversationStatus ?? 'OPEN'
 }
 
-export function PipelineDashboard({ leads, active, onChange }: Props) {
-  const counts = useMemo(() => {
+export const PipelineDashboard = memo(function PipelineDashboard({ leads, active, onChange }: Props) {
+  const { counts, hot, orders } = useMemo(() => {
     const c: Record<string, number> = { ALL: leads.length, OPEN: 0, UNREAD: 0, WAITING: 0, CLOSED: 0 }
-    leads.forEach(l => { const s = getConvStatus(l); if (c[s] !== undefined) c[s]++ })
-    return c
+    let hCount = 0
+    let oCount = 0
+    for (let i = 0; i < leads.length; i++) {
+      const l = leads[i]
+      const s = getConvStatus(l)
+      if (c[s] !== undefined) c[s]++
+      if (l.tag === 'HOT') hCount++
+      if (l.stage === 'ORDER_PLACED') oCount++
+    }
+    return { counts: c, hot: hCount, orders: oCount }
   }, [leads])
-
-  const hot = leads.filter(l => l.tag === 'HOT').length
-  const orders = leads.filter(l => l.stage === 'ORDER_PLACED').length
 
   return (
     <div className="bg-white border-b border-slate-100 flex-shrink-0">
@@ -97,4 +102,4 @@ export function PipelineDashboard({ leads, active, onChange }: Props) {
       </div>
     </div>
   )
-}
+})

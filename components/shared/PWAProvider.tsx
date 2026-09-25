@@ -14,7 +14,8 @@ export function PWAProvider({ children }: { children: React.ReactNode }) {
       navigator.serviceWorker
         .register('/sw.js')
         .then((reg) => {
-          console.log('[B Perfume PWA] Service Worker registered:', reg.scope)
+          reg.update()
+          console.log('[B Perfume PWA] Service Worker registered and checked for updates:', reg.scope)
         })
         .catch((err) => {
           console.warn('[B Perfume PWA] Service Worker registration failed:', err)

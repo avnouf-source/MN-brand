@@ -1,12 +1,24 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { KanbanBoard } from './KanbanBoard'
-import { InteractiveKanban } from './InteractiveKanban'
 import { ChatWindow } from './ChatWindow'
 import { ContextPanel } from './ContextPanel'
-import { PipelineDashboard, getConvStatus } from './PipelineDashboard'
-import { LeadCaptureModal } from './LeadCaptureModal'
+import { getConvStatus } from './PipelineDashboard'
 import { NativeChatList } from './NativeChatList'
+
+const PipelineDashboard = dynamic(
+  () => import('./PipelineDashboard').then(m => m.PipelineDashboard),
+  { ssr: false, loading: () => <div className="p-8 text-center text-xs text-slate-400">Loading Dashboard...</div> }
+)
+const InteractiveKanban = dynamic(
+  () => import('./InteractiveKanban').then(m => m.InteractiveKanban),
+  { ssr: false, loading: () => <div className="p-8 text-center text-xs text-slate-400">Loading Kanban...</div> }
+)
+const LeadCaptureModal = dynamic(
+  () => import('./LeadCaptureModal').then(m => m.LeadCaptureModal),
+  { ssr: false }
+)
 import {
   Plus,
   MessageSquare,
@@ -154,32 +166,32 @@ export function AgentWorkspace({
     return () => clearInterval(t)
   }, [selected])
 
-  function onSelect(lead: Lead) {
+  const onSelect = useCallback((lead: Lead) => {
     setSelected(lead)
     setMobile('chat')
-  }
+  }, [])
 
-  function onUpdate(updated: Lead) {
+  const onUpdate = useCallback((updated: Lead) => {
     setLeads(p => p.map(l => (l.id === updated.id ? updated : l)))
-    if (selected?.id === updated.id) setSelected(updated)
-  }
+    setSelected(prev => (prev?.id === updated.id ? updated : prev))
+  }, [])
 
-  function onNewMessage(leadId: string, msg: Message) {
-    const upd = (prev: Lead[]) =>
+  const onNewMessage = useCallback((leadId: string, msg: Message) => {
+    setLeads(prev =>
       prev.map(l => {
         if (l.id !== leadId) return l
         const c = l.conversation ?? { id: 'tmp', messages: [] }
         return { ...l, conversation: { ...c, messages: [...c.messages, msg] } }
       })
-    setLeads(upd)
-    setSelected(p => {
-      if (!p || p.id !== leadId) return p
-      const c = p.conversation ?? { id: 'tmp', messages: [] }
-      return { ...p, conversation: { ...c, messages: [...c.messages, msg] } }
+    )
+    setSelected(prev => {
+      if (!prev || prev.id !== leadId) return prev
+      const c = prev.conversation ?? { id: 'tmp', messages: [] }
+      return { ...prev, conversation: { ...c, messages: [...c.messages, msg] } }
     })
-  }
+  }, [])
 
-  function onTogglePin(leadId: string) {
+  const onTogglePin = useCallback((leadId: string) => {
     setPinnedIds(prev => {
       const next = prev.includes(leadId) ? prev.filter(id => id !== leadId) : [leadId, ...prev]
       try {
@@ -187,9 +199,9 @@ export function AgentWorkspace({
       } catch {}
       return next
     })
-  }
+  }, [])
 
-  function onToggleArchive(leadId: string) {
+  const onToggleArchive = useCallback((leadId: string) => {
     setArchivedIds(prev => {
       const next = prev.includes(leadId) ? prev.filter(id => id !== leadId) : [leadId, ...prev]
       try {
@@ -197,26 +209,25 @@ export function AgentWorkspace({
       } catch {}
       return next
     })
-  }
+  }, [])
 
-  function onDeleteLead(leadId: string) {
+  const onDeleteLead = useCallback((leadId: string) => {
     setLeads(prev => prev.filter(l => l.id !== leadId))
-    if (selected?.id === leadId) {
-      const remaining = leads.filter(l => l.id !== leadId)
-      setSelected(remaining[0] ?? null)
-    }
-  }
+    setSelected(prev => (prev?.id === leadId ? null : prev))
+  }, [])
 
-  const visibleLeads = leads.filter(l => {
-    if (pipeFilter !== 'ALL' && getConvStatus(l) !== pipeFilter) return false
-    if (channelFilter !== 'ALL') {
-      const src = (l.sourceUrl || '').toLowerCase()
-      if (channelFilter === 'WHATSAPP' && (src.includes('instagram') || src.includes('email'))) return false
-      if (channelFilter === 'INSTAGRAM' && !src.includes('instagram')) return false
-      if (channelFilter === 'EMAIL' && !src.includes('email')) return false
-    }
-    return true
-  })
+  const visibleLeads = useMemo(() => {
+    return leads.filter(l => {
+      if (pipeFilter !== 'ALL' && getConvStatus(l) !== pipeFilter) return false
+      if (channelFilter !== 'ALL') {
+        const src = (l.sourceUrl || '').toLowerCase()
+        if (channelFilter === 'WHATSAPP' && (src.includes('instagram') || src.includes('email'))) return false
+        if (channelFilter === 'INSTAGRAM' && !src.includes('instagram')) return false
+        if (channelFilter === 'EMAIL' && !src.includes('email')) return false
+      }
+      return true
+    })
+  }, [leads, pipeFilter, channelFilter])
 
   return (
     <div className="flex flex-col h-full bg-slate-50 overflow-hidden">

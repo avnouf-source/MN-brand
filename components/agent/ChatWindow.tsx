@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, memo } from 'react'
 import { Paperclip, Send, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Clock, ShieldAlert, Zap, ArrowLeft, CheckCircle2, Receipt } from 'lucide-react'
 import { QuickRepliesPopup } from './QuickRepliesPopup'
 import { VoiceNoteBubble } from './VoiceNoteBubble'
@@ -56,7 +56,7 @@ const STAGE_LABELS: Record<string, { label: string; bg: string; color: string }>
   DONE: { label: 'Delivered', bg: '#f0fdf4', color: '#10b981' },
 }
 
-export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) {
+export const ChatWindow = memo(function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [showQR, setShowQR] = useState(false)
@@ -524,4 +524,4 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
       />
     </div>
   )
-}
+})

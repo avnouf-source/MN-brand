@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo, useCallback, memo } from 'react'
 import {
   BarChart,
   Bar,
@@ -87,59 +87,75 @@ const INDIAN_REGIONAL_BASE = [
   { country: 'Pune & Western Corridor', flag: '🏔️', code: 'MH', baseLeads: 350, baseValueINR: 8100000, conversion: '34.2%', share: 8 },
 ]
 
-export function AnalyticsDashboard({ stats, agents, leads }: Props) {
+export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agents, leads }: Props) {
   // Default currency is strictly INR
   const [currency, setCurrency] = useState('INR')
   const [timeframe, setTimeframe] = useState<Timeframe>('all')
   const [showPrintModal, setShowPrintModal] = useState(false)
 
-  const cfg = TIMEFRAME_CONFIG[timeframe]
+  const cfg = useMemo(() => TIMEFRAME_CONFIG[timeframe], [timeframe])
 
-  // Time-scaled core KPIs
-  const totalLeads = Math.max(1, Math.round((stats.totalLeads || 5000) * cfg.leadFactor))
-  const hotLeads = Math.max(1, Math.round((stats.hotLeads || 1420) * cfg.leadFactor))
-  const openConvs = Math.max(1, Math.round((stats.openConvs || 1680) * cfg.leadFactor))
-  const orders = Math.max(1, Math.round((stats.orders || 920) * cfg.orderFactor))
-  const closed = Math.max(1, Math.round((stats.closed || 1150) * cfg.orderFactor))
-
-  // Average bottle order basket value ~ ₹2,300
-  const totalPipelineINR = Math.round((orders + openConvs) * 23000 * (timeframe === 'all' ? 1.0 : cfg.orderFactor * 1.2))
+  // Time-scaled core KPIs (memoized to eliminate CPU recalculation cycles)
+  const { totalLeads, hotLeads, openConvs, orders, closed, totalPipelineINR } = useMemo(() => {
+    const tLeads = Math.max(1, Math.round((stats.totalLeads || 5000) * cfg.leadFactor))
+    const hLeads = Math.max(1, Math.round((stats.hotLeads || 1420) * cfg.leadFactor))
+    const oConvs = Math.max(1, Math.round((stats.openConvs || 1680) * cfg.leadFactor))
+    const ords = Math.max(1, Math.round((stats.orders || 920) * cfg.orderFactor))
+    const cls = Math.max(1, Math.round((stats.closed || 1150) * cfg.orderFactor))
+    const pipeINR = Math.round((ords + oConvs) * 23000 * (timeframe === 'all' ? 1.0 : cfg.orderFactor * 1.2))
+    return {
+      totalLeads: tLeads,
+      hotLeads: hLeads,
+      openConvs: oConvs,
+      orders: ords,
+      closed: cls,
+      totalPipelineINR: pipeINR,
+    }
+  }, [stats, cfg, timeframe])
 
   // Time-scaled Fragrance rankings
-  const fragranceStats = FRAGRANCE_CATALOG_DATA.map(f => {
-    const sold = Math.max(1, Math.round(f.baseSold * cfg.orderFactor))
-    const revenueINR = sold * f.priceINR
-    return { ...f, sold, revenueINR }
-  })
+  const fragranceStats = useMemo(() => {
+    return FRAGRANCE_CATALOG_DATA.map(f => {
+      const sold = Math.max(1, Math.round(f.baseSold * cfg.orderFactor))
+      const revenueINR = sold * f.priceINR
+      return { ...f, sold, revenueINR }
+    })
+  }, [cfg])
 
   // Time-scaled 8 advisors workload & closed orders
-  const advisorPerformance = OFFICIAL_8_ADVISORS.map(adv => {
-    const assigned = Math.max(1, Math.round(adv.quota * cfg.leadFactor))
-    const closedOrders = Math.max(1, Math.round(assigned * 0.18))
-    const revenueINR = closedOrders * adv.avgOrder
-    const conversion = ((closedOrders / assigned) * 100).toFixed(1) + '%'
-    return {
-      ...adv,
-      assigned,
-      closedOrders,
-      revenueINR,
-      conversion,
-    }
-  })
+  const advisorPerformance = useMemo(() => {
+    return OFFICIAL_8_ADVISORS.map(adv => {
+      const assigned = Math.max(1, Math.round(adv.quota * cfg.leadFactor))
+      const closedOrders = Math.max(1, Math.round(assigned * 0.18))
+      const revenueINR = closedOrders * adv.avgOrder
+      const conversion = ((closedOrders / assigned) * 100).toFixed(1) + '%'
+      return {
+        ...adv,
+        assigned,
+        closedOrders,
+        revenueINR,
+        conversion,
+      }
+    })
+  }, [cfg])
 
-  const agentChartData = advisorPerformance.map(a => ({
-    name: a.name.split(' ')[0],
-    leads: a.assigned,
-    orders: a.closedOrders,
-    status: a.status,
-  }))
+  const agentChartData = useMemo(() => {
+    return advisorPerformance.map(a => ({
+      name: a.name.split(' ')[0],
+      leads: a.assigned,
+      orders: a.closedOrders,
+      status: a.status,
+    }))
+  }, [advisorPerformance])
 
   // Regional Heatmap scaled
-  const regionalData = INDIAN_REGIONAL_BASE.map(r => ({
-    ...r,
-    leads: Math.max(1, Math.round(r.baseLeads * cfg.leadFactor)),
-    valueINR: Math.max(10000, Math.round(r.baseValueINR * cfg.orderFactor)),
-  }))
+  const regionalData = useMemo(() => {
+    return INDIAN_REGIONAL_BASE.map(r => ({
+      ...r,
+      leads: Math.max(1, Math.round(r.baseLeads * cfg.leadFactor)),
+      valueINR: Math.max(10000, Math.round(r.baseValueINR * cfg.orderFactor)),
+    }))
+  }, [cfg])
 
   // Multi-Section Comprehensive CSV Export Engine
   function exportComprehensiveCSV() {
@@ -1023,4 +1039,4 @@ export function AnalyticsDashboard({ stats, agents, leads }: Props) {
       )}
     </div>
   )
-}
+})
