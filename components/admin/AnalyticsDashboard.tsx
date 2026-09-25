@@ -226,16 +226,141 @@ export function AnalyticsDashboard({ stats, agents, leads }: Props) {
         </div>
       </div>
 
-      {/* Charts Row */}
+      {/* Fragrance-Specific Analytics Row: Top Selling Scents & Most Requested Scent Profiles */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Agent Performance */}
+        {/* Top Selling Fragrance of the Month */}
+        <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 font-serif">Top Selling Fragrances of the Month</h3>
+              <p className="text-xs text-slate-400">Total Flacons Ordered &amp; Net Revenue Generated</p>
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+              Ranked by Volume
+            </span>
+          </div>
+
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart
+              data={[
+                { name: 'CITYMAN (1001)', bottles: 380, revenue: 836000, strength: 'HARD' },
+                { name: 'OUD VANILLE (4415)', bottles: 310, revenue: 620000, strength: 'HARD' },
+                { name: 'HONEY DEW (3301)', bottles: 220, revenue: 341000, strength: 'MILD' },
+                { name: 'OUD ROYALE (5502)', bottles: 195, revenue: 468000, strength: 'HARD' },
+                { name: 'VELVET ROSE (2104)', bottles: 165, revenue: 305250, strength: 'MODERATE' },
+                { name: 'SANTAL IMPERIAL (6608)', bottles: 140, revenue: 273000, strength: 'MODERATE' },
+              ]}
+              barSize={28}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <Tooltip
+                formatter={(val: any, name: any) => [
+                  name === 'bottles' ? `${val} Flacons` : `₹${Number(val).toLocaleString('en-IN')}`,
+                  name === 'bottles' ? 'Bottles Sold' : 'Revenue',
+                ]}
+                contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }}
+              />
+              <Bar dataKey="bottles" fill="#0A0F1D" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-100 text-xs text-center">
+            <div className="p-2 rounded-xl bg-slate-50">
+              <span className="text-[10px] text-slate-400 block uppercase">Top Seller</span>
+              <span className="font-bold text-slate-900 font-serif">CITYMAN Extrait</span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-50">
+              <span className="text-[10px] text-slate-400 block uppercase">Fastest Growing</span>
+              <span className="font-bold text-amber-800 font-serif">OUD VANILLE</span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-50">
+              <span className="text-[10px] text-slate-400 block uppercase">Gentle Favorite</span>
+              <span className="font-bold text-emerald-700 font-serif">HONEY DEW</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Most Requested Scent Profiles (Donut Chart) */}
+        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="text-sm font-bold text-slate-900 font-serif">Most Requested Scent Profiles</h3>
+              <span className="text-[10px] font-semibold text-slate-400">Client Inquiries</span>
+            </div>
+            <p className="text-[11px] text-slate-500">Oud vs Floral vs Gourmand vs Fresh</p>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center my-2">
+            <ResponsiveContainer width="100%" height={170}>
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: 'Woody & Assam Oud', value: 42, color: '#C9A84C' },
+                    { name: 'Sweet & Gourmand', value: 26, color: '#8b5cf6' },
+                    { name: 'Crisp & Citrus Fresh', value: 18, color: '#06b6d4' },
+                    { name: 'Floral Rose & Jasmine', value: 14, color: '#ec4899' },
+                  ]}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={45}
+                  outerRadius={70}
+                  paddingAngle={4}
+                  dataKey="value"
+                >
+                  {[
+                    { color: '#C9A84C' },
+                    { color: '#8b5cf6' },
+                    { color: '#06b6d4' },
+                    { color: '#ec4899' },
+                  ].map((entry, index) => (
+                    <Cell key={index} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(val: any) => [`${val}% of Inquiries`, 'Share']}
+                  contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="space-y-1.5 pt-2 border-t border-slate-100">
+            {[
+              { name: 'Deep Woody & Oud', share: '42%', color: '#C9A84C', bottles: '575 Flacons' },
+              { name: 'Sweet & Gourmand', share: '26%', color: '#8b5cf6', bottles: '356 Flacons' },
+              { name: 'Crisp & Citrus Fresh', share: '18%', color: '#06b6d4', bottles: '247 Flacons' },
+              { name: 'Floral Rose & Jasmine', share: '14%', color: '#ec4899', bottles: '192 Flacons' },
+            ].map(item => (
+              <div key={item.name} className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1.5 text-slate-700">
+                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+                  <span>{item.name}</span>
+                </span>
+                <span className="font-bold text-slate-900">{item.share}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 60-Day Smart Refill Forecast & 8 Advisors Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* 8 B Perfume Luxury Sales Advisors Workload */}
         <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-700 font-serif">8 B Perfume Luxury Sales Advisors Workload</h3>
-            <span className="text-xs text-slate-400">Equal Partition Routing (~625 leads/advisor)</span>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 font-serif">8 B Perfume Luxury Sales Advisors Workload</h3>
+              <p className="text-xs text-slate-400">Equal Partition Routing (~625 leads/advisor across 5,000 clients)</p>
+            </div>
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              8 Advisors
+            </span>
           </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={agentData} barSize={26}>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={agentData} barSize={24}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
@@ -245,28 +370,45 @@ export function AnalyticsDashboard({ stats, agents, leads }: Props) {
           </ResponsiveContainer>
         </div>
 
-        {/* Pipeline Distribution */}
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex flex-col justify-between">
-          <h3 className="text-sm font-semibold text-slate-700 mb-2">Stage Pipeline Funnel</h3>
-          <div className="flex-1 flex items-center justify-center">
-            <ResponsiveContainer width="100%" height={170}>
-              <PieChart>
-                <Pie data={pipelineData} cx="50%" cy="50%" innerRadius={45} outerRadius={68} paddingAngle={4} dataKey="value">
-                  {pipelineData.map((_, i) => (
-                    <Cell key={i} fill={PIPELINE_COLORS[i % PIPELINE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
+        {/* 60-Day Smart Refill Forecast Widget */}
+        <div className="bg-gradient-to-br from-[#FFFDF9] to-white rounded-2xl border border-amber-200/80 p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                Automated Engine
+              </span>
+              <span className="text-xs font-mono font-bold text-amber-700">60-Day Trigger</span>
+            </div>
+            <h3 className="text-base font-bold text-slate-900 font-serif mt-2">Smart Refill Pipeline</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Automated WhatsApp replenishment triggers</p>
           </div>
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-            {pipelineData.map((p, i) => (
-              <div key={p.name} className="flex items-center gap-1.5 text-xs text-slate-600">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ background: PIPELINE_COLORS[i] }} />
-                <span>{p.name}: <strong className="text-slate-800">{p.value}</strong></span>
+
+          <div className="space-y-3 my-4">
+            <div className="p-3 rounded-xl bg-white border border-amber-100 shadow-2xs">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500">Refills Due This Month:</span>
+                <span className="font-bold text-slate-900">142 Clients</span>
               </div>
-            ))}
+              <div className="flex items-center justify-between text-xs mt-1">
+                <span className="text-slate-500">Projected Recurring Revenue:</span>
+                <span className="font-bold text-amber-800 font-serif">₹2,84,000</span>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-white border border-amber-100 shadow-2xs">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500">Refill Conversion Rate:</span>
+                <span className="font-bold text-emerald-700">71.4% (VIP Loyalty)</span>
+              </div>
+              <div className="flex items-center justify-between text-xs mt-1">
+                <span className="text-slate-500">Automated Dispatch Time:</span>
+                <span className="font-bold text-slate-700">Day 60 @ 10:00 AM</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-[11px] text-slate-500 text-center bg-amber-50/60 p-2 rounded-xl border border-amber-100/80">
+            ⚡ Triggers personalized WhatsApp re-orders when 50ml/100ml bottles are near empty.
           </div>
         </div>
       </div>

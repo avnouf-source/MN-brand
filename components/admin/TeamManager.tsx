@@ -14,10 +14,15 @@ interface Agent {
 
 export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
   const [agents, setAgents] = useState<Agent[]>(() => {
-    if (initialAgents.length === 0 || initialAgents.length > 10) {
-      return generate8PerfumeAgents()
+    const valid = (initialAgents || []).filter(a =>
+      a.email.endsWith('@bperfume.com') &&
+      !a.name.toLowerCase().includes('sara johnson') &&
+      !a.name.toLowerCase().includes('karim al-hassan')
+    )
+    if (valid.length === 8) {
+      return valid
     }
-    return initialAgents
+    return generate8PerfumeAgents()
   })
   const [search, setSearch] = useState('')
   const [modal, setModal] = useState<'add' | 'edit' | 'reset' | null>(null)

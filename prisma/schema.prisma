@@ -116,3 +116,37 @@ model WhatsAppConfig {
   businessAccountId  String
   updatedAt          DateTime @updatedAt
 }
+
+model Product {
+  id              String   @id @default(cuid())
+  productCode     String   @unique
+  productName     String
+  gender          String   @default("UNISEX")
+  price50ml       Float
+  price100ml      Float
+  inspiredVersion String?
+  topNotes        String?
+  middleNotes     String?
+  baseNotes       String?
+  strength        String   @default("MODERATE") // MILD | MODERATE | HARD
+  inStock         Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model RefillReminder {
+  id               String    @id @default(cuid())
+  leadId           String
+  customerName     String
+  customerPhone    String
+  productName      String
+  productCode      String?
+  bottleSize       String    @default("100ml") // 50ml | 100ml
+  orderDate        DateTime  @default(now())
+  dueDate          DateTime  // 60 days after orderDate
+  status           String    @default("SCHEDULED") // SCHEDULED | SENT | DISMISSED
+  scheduledMessage String?
+  sentAt           DateTime?
+  createdAt        DateTime  @default(now())
+}
+

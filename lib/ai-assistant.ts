@@ -1,4 +1,5 @@
 // B Perfume Luxury Fragrance Consultant AI Persona
+import { OFFICIAL_PERFUME_CATALOG, PerfumeProduct, findPerfumeByText, matchPerfumeCriteria } from './products'
 
 export interface LeadContext {
   name: string
@@ -7,55 +8,129 @@ export interface LeadContext {
   leadSource?: string
 }
 
+/**
+ * Intelligent Fragrance Consultant Auto-Reply Engine
+ * Dynamically queries the B Perfume Product Catalog, matches notes & strengths,
+ * asks interactive Matchmaker questions, and quotes 50ml & 100ml Indian Rupee prices.
+ */
 export function generateAIAutoReply(lead: LeadContext, customerMessage?: string): string {
   const firstName = lead.name.split(' ')[0] || 'valued guest'
-  const cleanMsg = (customerMessage || '').toLowerCase()
+  const cleanMsg = (customerMessage || '').toLowerCase().trim()
 
-  // 1. Inquiry specifically about Men, Women, or Unisex
-  if (cleanMsg.includes('men') || cleanMsg.includes('him') || cleanMsg.includes('man') || cleanMsg.includes('cityman')) {
+  // 1. Check for specific notes & strength combinations requested by user
+  // Example: "Hard perfume with Tobacco notes", "Mild fresh honey", "Woody oud hard"
+  const isHard = cleanMsg.includes('hard') || cleanMsg.includes('12-hour') || cleanMsg.includes('12 hour') || cleanMsg.includes('strong') || cleanMsg.includes('intense')
+  const isMild = cleanMsg.includes('mild') || cleanMsg.includes('light') || cleanMsg.includes('subtle') || cleanMsg.includes('soft')
+  const isModerate = cleanMsg.includes('moderate') || cleanMsg.includes('medium')
+
+  const detectedStrength = isHard ? 'HARD' : isMild ? 'MILD' : isModerate ? 'MODERATE' : undefined
+
+  // Scent notes detection
+  const hasTobacco = cleanMsg.includes('tobacco')
+  const hasVanilla = cleanMsg.includes('vanilla') || cleanMsg.includes('vanille')
+  const hasHoney = cleanMsg.includes('honey') || cleanMsg.includes('dew') || cleanMsg.includes('sweet')
+  const hasOud = cleanMsg.includes('oud') || cleanMsg.includes('agarwood')
+  const hasWoody = cleanMsg.includes('wood') || cleanMsg.includes('cedar') || cleanMsg.includes('sandal')
+  const hasFresh = cleanMsg.includes('fresh') || cleanMsg.includes('citrus') || cleanMsg.includes('lemon') || cleanMsg.includes('mint')
+  const hasRose = cleanMsg.includes('rose') || cleanMsg.includes('floral') || cleanMsg.includes('jasmine')
+  const hasLeather = cleanMsg.includes('leather') || cleanMsg.includes('smoke') || cleanMsg.includes('smoky')
+
+  // Check if customer mentions a specific product name or code
+  const exactPerfume = findPerfumeByText(cleanMsg)
+
+  // CRITICAL SPECIFIC MATCH: Hard + Tobacco or Oud Vanille
+  if ((hasTobacco && (isHard || hasVanilla)) || (cleanMsg.includes('oud vanille') || cleanMsg.includes('4415'))) {
+    const p = OFFICIAL_PERFUME_CATALOG.find(x => x.productCode === '4415')!
     return (
-      `Dear ${firstName}, welcome to B Perfume Haute Parfumerie ⚜️\n\n` +
-      `For distinguished gentlemen, our crowning creation is the **CITYMAN Extrait de Parfum** — renowned for its rich bergamot, smoked cedarwood, and signature **12-hour long-lasting sillage**.\n\n` +
-      `Would you like to reserve a 100ml flacon today with complimentary VIP courier delivery, or shall our scent stylist guide you through our complete Men's Collection?`
+      `Dear ${firstName}, for your preference in an intense **Hard (12-Hour)** formulation with **rich Tobacco and Vanilla notes**, our master recommendation is:\n\n` +
+      `✨ **${p.productName} (Extrait de Parfum)** — Code: #${p.productCode}\n` +
+      `⚡ **Strength:** HARD (${p.strength === 'HARD' ? 'Commanding 12-Hour Long-Lasting Projection' : '8-Hour Longevity'})\n` +
+      `⚜️ **Inspired by:** ${p.inspiredVersion}\n` +
+      `🌿 **Olfactory Pyramid:**\n` +
+      `  • Top: ${p.topNotes}\n` +
+      `  • Heart: ${p.middleNotes}\n` +
+      `  • Base: ${p.baseNotes}\n\n` +
+      `💰 **Official Boutique Pricing (₹ INR):**\n` +
+      `  • **50ml Flacon:** ₹${p.price50ml.toLocaleString('en-IN')}\n` +
+      `  • **100ml Flacon:** ₹${p.price100ml.toLocaleString('en-IN')}\n\n` +
+      `Would you like to reserve a 50ml or 100ml bottle today? Your personal sales advisor can dispatch your order with complimentary boutique packaging.`
     )
   }
 
-  if (cleanMsg.includes('women') || cleanMsg.includes('her') || cleanMsg.includes('floral') || cleanMsg.includes('rose')) {
+  // Honey Dew / Sweet / Mild match
+  if (hasHoney || cleanMsg.includes('honey dew') || cleanMsg.includes('3301')) {
+    const p = OFFICIAL_PERFUME_CATALOG.find(x => x.productCode === '3301')!
     return (
-      `Greetings ${firstName}, welcome to B Perfume Haute Parfumerie 🌹\n\n` +
-      `Our Women's Haute Collection is led by **Velvet Rose Pour Femme Extrait** — infused with Grasse damascena rose, white musk, and a radiant **12-hour long-lasting finish**.\n\n` +
-      `May we prepare a bespoke scent presentation for you, or do you have a specific olfactory profile in mind (floral, sweet amber, or aquatic)?`
+      `Greetings ${firstName}! For a **Mild**, sweet, and comforting aura, our client favorite is:\n\n` +
+      `🍯 **${p.productName} (Extrait de Parfum)** — Code: #${p.productCode}\n` +
+      `⚡ **Strength:** MILD (Gentle, refined, and non-overpowering)\n` +
+      `⚜️ **Inspired by:** ${p.inspiredVersion}\n` +
+      `🌿 **Notes:** ${p.topNotes} layered over golden honey, bourbon vanilla, and creamy cedarwood.\n\n` +
+      `💰 **Boutique Pricing (₹ INR):**\n` +
+      `  • **50ml Flacon:** ₹${p.price50ml.toLocaleString('en-IN')}\n` +
+      `  • **100ml Flacon:** ₹${p.price100ml.toLocaleString('en-IN')}\n\n` +
+      `Shall we prepare a 50ml travel flacon or full 100ml presentation bottle for you?`
     )
   }
 
-  if (cleanMsg.includes('unisex') || cleanMsg.includes('oud') || cleanMsg.includes('amber')) {
+  // Flagship CITYMAN match
+  if (cleanMsg.includes('cityman') || cleanMsg.includes('1001') || (cleanMsg.includes('men') && isHard)) {
+    const p = OFFICIAL_PERFUME_CATALOG.find(x => x.productCode === '1001')!
     return (
-      `Hello ${firstName}, welcome to B Perfume Haute Parfumerie ✨\n\n` +
-      `Our Unisex masterpiece, **Oud Royale Extrait**, balances rare Cambodian agarwood with warm amber crystals, formulated at pure Extrait concentration to ensure a persistent **12-hour long-lasting aura**.\n\n` +
-      `Would you like to explore our full unisex catalog, or would you prefer a private scent consultation with your assigned fragrance advisor?`
+      `Dear ${firstName}, for distinguished gentlemen seeking unmatched prestige, our flagship creation is:\n\n` +
+      `👑 **${p.productName}** — Code: #${p.productCode}\n` +
+      `⚡ **Strength:** HARD (Guaranteed 12-Hour Long-Lasting Sillage)\n` +
+      `🌿 **Notes:** Italian Bergamot, Birch Tar, Smoky Tuscan Leather, and Royal Ambergris.\n\n` +
+      `💰 **Pricing:** 50ml at ₹${p.price50ml.toLocaleString('en-IN')} | 100ml at ₹${p.price100ml.toLocaleString('en-IN')}\n\n` +
+      `Would you like to reserve the 100ml flacon today with complimentary VIP courier delivery?`
     )
   }
 
-  // 2. Pricing or order inquiries
-  if (cleanMsg.includes('price') || cleanMsg.includes('order') || cleanMsg.includes('buy') || cleanMsg.includes('cost')) {
+  // Direct match if any other perfume is identified
+  if (exactPerfume) {
     return (
-      `Dear ${firstName}, thank you for your interest in B Perfume 🛍️\n\n` +
-      `All our creations are crafted as **Extrait de Parfum (12-Hour Long-Lasting)**:\n` +
-      `• **CITYMAN Extrait de Parfum (100ml):** Signature Masculine Blend\n` +
-      `• **Velvet Rose Pour Femme (100ml):** Royal Floral Elegance\n` +
-      `• **Oud Royale Extrait (50ml):** Rare Agarwood Prestige\n\n` +
-      `Your personal fragrance advisor is reviewing your request and will share our exclusive pricing and direct ordering link in just a moment!`
+      `Dear ${firstName}, here are the official boutique details for **${exactPerfume.productName}**:\n\n` +
+      `✨ **Code:** #${exactPerfume.productCode} (${exactPerfume.gender})\n` +
+      `⚡ **Strength:** ${exactPerfume.strength} (${exactPerfume.strength === 'HARD' ? '12-Hour Long-Lasting' : '8-Hour Longevity'})\n` +
+      `${exactPerfume.inspiredVersion ? `⚜️ **Inspired by:** ${exactPerfume.inspiredVersion}\n` : ''}` +
+      `🌿 **Notes:** ${exactPerfume.topNotes} → ${exactPerfume.middleNotes} → ${exactPerfume.baseNotes}\n\n` +
+      `💰 **Official Pricing:**\n` +
+      `  • **50ml:** ₹${exactPerfume.price50ml.toLocaleString('en-IN')}\n` +
+      `  • **100ml:** ₹${exactPerfume.price100ml.toLocaleString('en-IN')}\n\n` +
+      `Your personal fragrance stylist is available to assist you with order confirmation right now!`
     )
   }
 
-  // 3. Default luxury welcome & scent category offering
+  // General note preferences match (Matchmaker answering)
+  if (hasWoody || hasOud || hasFresh || hasRose || detectedStrength) {
+    const matched = matchPerfumeCriteria({
+      notePreference: cleanMsg,
+      strength: detectedStrength,
+    })
+
+    return (
+      `Dear ${firstName}, based on your preference for **${detectedStrength || 'luxury'}** formulations and your scent profile, our Sommelier recommends:\n\n` +
+      `✨ **${matched.productName} (Extrait de Parfum)** — Code: #${matched.productCode}\n` +
+      `⚡ **Strength:** ${matched.strength} (${matched.strength === 'HARD' ? '12-Hour Long-Lasting' : '8-Hour Refined Longevity'})\n` +
+      `🌿 **Olfactory Notes:** ${matched.topNotes} → ${matched.middleNotes} → ${matched.baseNotes}\n` +
+      `💰 **Pricing:** 50ml: ₹${matched.price50ml.toLocaleString('en-IN')} | 100ml: ₹${matched.price100ml.toLocaleString('en-IN')}\n\n` +
+      `Would you like to proceed with this curation, or explore another olfactory category?`
+    )
+  }
+
+  // 2. Interactive Scent Matchmaker Flow (Default interactive welcome)
   return (
     `Dear ${firstName}, welcome to B Perfume Haute Parfumerie ⚜️\n\n` +
-    `Thank you for connecting with our private client atelier. Every B Perfume fragrance is handcrafted with rare botanical essences and an ultra-concentrated **12-hour long-lasting formulation**.\n\n` +
-    `To assist you with bespoke curation, which category may we present today?\n` +
-    `1️⃣ **Men's Collection** (featuring our acclaimed *CITYMAN Extrait de Parfum*)\n` +
-    `2️⃣ **Women's Collection** (featuring *Velvet Rose Pour Femme*)\n` +
-    `3️⃣ **Unisex & Oriental Prestige** (featuring *Oud Royale & Amber Blanc*)\n\n` +
-    `Kindly reply with your preference and your dedicated advisor will curate your selection immediately.`
+    `I am your dedicated AI Fragrance Consultant. Let us discover your ideal signature flacon in 2 quick steps:\n\n` +
+    `1️⃣ **Which olfactory mood speaks to you?**\n` +
+    `   • *Deep Woody & Smoky* (Oud, Tobacco Leaf, Smoked Leather)\n` +
+    `   • *Sweet & Gourmand* (Wild Honey, Madagascar Vanilla, Cacao)\n` +
+    `   • *Crisp & Fresh* (Calabrian Lemon, Sea Breeze, Spearmint)\n` +
+    `   • *Royal Floral* (Damask Rose, White Jasmine)\n\n` +
+    `2️⃣ **What projection strength do you prefer?**\n` +
+    `   • *Hard* (12-Hour commanding room presence)\n` +
+    `   • *Moderate* (8-Hour elegant intimacy)\n` +
+    `   • *Mild* (Subtle, fresh everyday aura)\n\n` +
+    `Kindly reply with your preferred notes & strength (e.g., *"I want a Hard perfume with Tobacco"* or *"Sweet and Mild"*), and I will immediately match your bespoke flacon with pricing!`
   )
 }

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
 import { generate8PerfumeAgents, generate5000IndianLeads } from '../lib/bulk-generator'
+import { OFFICIAL_PERFUME_CATALOG } from '../lib/products'
 
 const prisma = new PrismaClient()
 
@@ -214,6 +215,82 @@ async function main() {
     try {
       await prisma.template.create({ data: t })
     } catch {}
+  }
+
+  // 8. Official Perfume Product Catalog
+  console.log('📦 Seeding official B Perfume catalog...')
+  for (const prod of OFFICIAL_PERFUME_CATALOG) {
+    try {
+      await prisma.product.upsert({
+        where: { productCode: prod.productCode },
+        update: {
+          productName: prod.productName,
+          gender: prod.gender,
+          price50ml: prod.price50ml,
+          price100ml: prod.price100ml,
+          inspiredVersion: prod.inspiredVersion,
+          topNotes: prod.topNotes,
+          middleNotes: prod.middleNotes,
+          baseNotes: prod.baseNotes,
+          strength: prod.strength,
+          inStock: true,
+        },
+        create: {
+          productCode: prod.productCode,
+          productName: prod.productName,
+          gender: prod.gender,
+          price50ml: prod.price50ml,
+          price100ml: prod.price100ml,
+          inspiredVersion: prod.inspiredVersion,
+          topNotes: prod.topNotes,
+          middleNotes: prod.middleNotes,
+          baseNotes: prod.baseNotes,
+          strength: prod.strength,
+          inStock: true,
+        },
+      })
+    } catch (err) {
+      console.warn('Error seeding product:', prod.productCode, err)
+    }
+  }
+
+  // 9. Sample 60-Day Smart Refill Automation Triggers
+  try {
+    await prisma.refillReminder.deleteMany({})
+    const sampleRefillDue = new Date()
+    sampleRefillDue.setDate(sampleRefillDue.getDate() - 3) // due 3 days ago for instant demo
+
+    await prisma.refillReminder.createMany({
+      data: [
+        {
+          leadId: 'demo-lead-1',
+          customerName: 'Priya Sharma',
+          customerPhone: '+919820123456',
+          productName: 'OUD VANILLE',
+          productCode: '4415',
+          bottleSize: '100ml',
+          orderDate: new Date(Date.now() - 63 * 24 * 60 * 60 * 1000),
+          dueDate: sampleRefillDue,
+          status: 'SCHEDULED',
+          scheduledMessage: 'Hello Priya, running low on your OUD VANILLE Extrait (100ml)? Your 60-day luxury replenishment window is now open with complimentary boutique delivery.',
+        },
+        {
+          leadId: 'demo-lead-2',
+          customerName: 'Rohan Verma',
+          customerPhone: '+919811987654',
+          productName: 'CITYMAN EXTRAIT',
+          productCode: '1001',
+          bottleSize: '100ml',
+          orderDate: new Date(Date.now() - 58 * 24 * 60 * 60 * 1000),
+          dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+          status: 'SCHEDULED',
+          scheduledMessage: 'Greetings Rohan, your CITYMAN Extrait flacon was dispatched 58 days ago. Reserve your refill flacon now before seasonal boutique allocation ends.',
+        },
+      ],
+    })
+    console.log('⏰ Seeded 60-day smart refill automation reminders.')
+  } catch (err) {
+    console.warn('Error seeding refill reminders:', err)
   }
 
   console.log('✅ B Perfume seed completed successfully!')

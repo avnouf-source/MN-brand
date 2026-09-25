@@ -1,9 +1,12 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Paperclip, Send, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Clock, ShieldAlert, Zap, ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { Paperclip, Send, AlertCircle, Phone, MessageCircle, Mic, Sparkles, Clock, ShieldAlert, Zap, ArrowLeft, CheckCircle2, Receipt } from 'lucide-react'
 import { QuickRepliesPopup } from './QuickRepliesPopup'
 import { VoiceNoteBubble } from './VoiceNoteBubble'
 import { VoiceNoteRecorder } from './VoiceNoteRecorder'
+import { WhatsAppInvoiceModal } from './WhatsAppInvoiceModal'
+import { PerfumeCheatSheetCard } from './PerfumeCheatSheetCard'
+import { OFFICIAL_PERFUME_CATALOG, PerfumeProduct, findPerfumeByText } from '@/lib/products'
 import type { Lead, Message, QuickReply } from './AgentWorkspace'
 import { formatPhoneDisplay, parsePhone, waLink, telLink, getCountryLocalTime } from '@/lib/countries'
 import { analyzeSentiment, calculatePredictiveScore } from '@/lib/ai-scoring'
@@ -59,6 +62,9 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
   const [isRecordingVoice, setIsRecordingVoice] = useState(false)
   const [aiLoading, setAiLoading] = useState(false)
   const [escalated, setEscalated] = useState(false)
+  const [detectedPerfume, setDetectedPerfume] = useState<PerfumeProduct | null>(null)
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false)
+  const [invoiceTargetProduct, setInvoiceTargetProduct] = useState<PerfumeProduct | null>(null)
   const btm = useRef<HTMLDivElement>(null)
   const msgs = lead.conversation?.messages ?? []
   const offline = isUserOffline(msgs)
@@ -93,6 +99,18 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
   }
 
   useEffect(() => { btm.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs.length])
+
+  // Real-time Perfume Detection for Agent Cheat Sheet
+  useEffect(() => {
+    const lastCustomerMsg = [...msgs].reverse().find(m => m.direction === 'INBOUND')?.body || ''
+    const textToScan = `${input} ${lastCustomerMsg}`
+    if (textToScan.trim()) {
+      const match = findPerfumeByText(textToScan)
+      if (match) {
+        setDetectedPerfume(match)
+      }
+    }
+  }, [input, msgs])
 
   function onInput(v: string) { setInput(v); setShowQR(v.startsWith('/')) }
   function onQR(body: string) { setInput(body); setShowQR(false) }
@@ -214,6 +232,20 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
           >
             <Sparkles size={13} className={aiLoading ? 'animate-spin' : ''} style={{ color: '#C9A84C' }} />
             <span className="hidden sm:inline">AI Consultant</span>
+          </button>
+
+          {/* 1-Click WhatsApp Invoice */}
+          <button
+            type="button"
+            onClick={() => {
+              setInvoiceTargetProduct(detectedPerfume || OFFICIAL_PERFUME_CATALOG[0])
+              setShowInvoiceModal(true)
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-amber-300 bg-amber-50/90 hover:bg-amber-100 text-amber-950 text-xs font-semibold shadow-2xs transition active:scale-95 cursor-pointer"
+            title="Generate 1-Click WhatsApp Order Summary / Invoice"
+          >
+            <Receipt size={13} style={{ color: '#C9A84C' }} />
+            <span className="hidden sm:inline">WhatsApp Invoice</span>
           </button>
 
           {/* WhatsApp Direct Link */}
@@ -381,6 +413,21 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
         <div ref={btm} />
       </div>
 
+      {/* Agent 'Cheat Sheet' Pop-up Card */}
+      {detectedPerfume && (
+        <div className="px-4 py-2 bg-transparent flex-shrink-0 max-w-xl mx-auto w-full">
+          <PerfumeCheatSheetCard
+            product={detectedPerfume}
+            onClose={() => setDetectedPerfume(null)}
+            onInsertPitch={text => setInput(text)}
+            onOpenInvoice={prod => {
+              setInvoiceTargetProduct(prod)
+              setShowInvoiceModal(true)
+            }}
+          />
+        </div>
+      )}
+
       {/* Input / Voice Note Recording Bar */}
       <div className="px-4 py-3 bg-white border-t border-slate-100 flex-shrink-0">
         <div className="relative">
@@ -434,6 +481,18 @@ export function ChatWindow({ lead, quickReplies, onNewMessage, onBack }: Props) 
           )}
         </div>
       </div>
+
+      {/* One-Click WhatsApp Invoice Modal */}
+      <WhatsAppInvoiceModal
+        isOpen={showInvoiceModal}
+        onClose={() => setShowInvoiceModal(false)}
+        onSendInvoice={invoiceText => {
+          setInput(invoiceText)
+        }}
+        clientName={lead.name}
+        clientPhone={lead.phone}
+        preselectedProduct={invoiceTargetProduct}
+      />
     </div>
   )
 }

@@ -1,10 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Sparkles, Users, Bot, FileText, Settings, MessageCircle, ClipboardList, ShieldCheck } from 'lucide-react'
+import { LayoutDashboard, Sparkles, Users, Bot, FileText, Settings, MessageCircle, ClipboardList, ShieldCheck, Package } from 'lucide-react'
 
 const NAV = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin/catalog', icon: Package, label: 'Product Catalog' },
   { href: '/admin/ai-assistant', icon: Sparkles, label: 'Executive AI' },
   { href: '/admin/team', icon: Users, label: 'Team' },
   { href: '/admin/automation', icon: Bot, label: 'Automation' },
