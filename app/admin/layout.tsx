@@ -7,7 +7,9 @@ import { MobileBottomNav } from '@/components/shared/MobileBottomNav'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user as any).role !== 'ADMIN') redirect('/agent/workspace')
+  if (!session) redirect('/login')
+  const role = (session.user as any)?.role
+  if (role !== 'ADMIN' && role !== 'SUB_ADMIN') redirect('/agent/workspace')
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <AdminSidebar />

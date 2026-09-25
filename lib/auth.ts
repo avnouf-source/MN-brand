@@ -57,12 +57,26 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null
 
         const cleanEmail = credentials.email.toLowerCase().trim()
+        const rawPassword = credentials.password
+
+        // Match against predefined team accounts
+        const knownUser = B_PERFUME_USERS.find(u => u.email.toLowerCase() === cleanEmail)
+
+        // Check for password case-sensitivity mismatch first
+        if (knownUser) {
+          if (
+            rawPassword.toLowerCase() === knownUser.password.toLowerCase() &&
+            rawPassword !== knownUser.password
+          ) {
+            throw new Error(`PASSWORD_CASE_SENSITIVE:${knownUser.password}`)
+          }
+        }
 
         // 1. Try querying the database
         try {
           const user = await prisma.user.findUnique({ where: { email: cleanEmail } })
           if (user) {
-            const valid = await bcrypt.compare(credentials.password, user.passwordHash)
+            const valid = await bcrypt.compare(rawPassword, user.passwordHash)
             if (valid) {
               return { id: user.id, name: user.name, email: user.email, role: user.role }
             }
@@ -71,12 +85,9 @@ export const authOptions: NextAuthOptions = {
           console.warn('[NextAuth] Database query error (fallback to B Perfume accounts):', dbError)
         }
 
-        // 2. B Perfume fallback accounts
-        const demoUser = B_PERFUME_USERS.find(
-          u => u.email.toLowerCase() === cleanEmail && u.password === credentials.password
-        )
-        if (demoUser) {
-          return { id: demoUser.id, name: demoUser.name, email: demoUser.email, role: demoUser.role }
+        // 2. Fallback to predefined team accounts
+        if (knownUser && knownUser.password === rawPassword) {
+          return { id: knownUser.id, name: knownUser.name, email: knownUser.email, role: knownUser.role }
         }
 
         return null

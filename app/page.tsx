@@ -7,5 +7,10 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   const session = await getServerSession(authOptions)
   if (!session) redirect('/login')
-  redirect((session.user as any).role === 'ADMIN' ? '/admin/dashboard' : '/agent/workspace')
+  const role = (session.user as any)?.role
+  if (role === 'ADMIN' || role === 'SUB_ADMIN') {
+    redirect('/admin/dashboard')
+  } else {
+    redirect('/agent/workspace')
+  }
 }

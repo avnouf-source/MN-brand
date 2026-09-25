@@ -2,7 +2,126 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { Loader2, Mail, Lock, Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react'
+import {
+  Loader2,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  AlertCircle,
+  Users,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  ArrowRight,
+} from 'lucide-react'
+
+// All 11 officially seeded B Perfume team accounts
+const SEEDED_TEAM_ACCOUNTS = [
+  // Super Admin
+  {
+    roleCategory: 'Super Admin',
+    name: 'Nouf',
+    email: 'admin@bperfume.com',
+    password: 'Nouf1234',
+    role: 'ADMIN',
+    destination: 'Executive Dashboard',
+    path: '/admin/dashboard',
+  },
+  // Sub-Admins (2)
+  {
+    roleCategory: 'Sub-Admin',
+    name: 'Alnas',
+    email: 'alnas@bperfume.com',
+    password: 'Alnas1234',
+    role: 'SUB_ADMIN',
+    destination: 'Executive Dashboard',
+    path: '/admin/dashboard',
+  },
+  {
+    roleCategory: 'Sub-Admin',
+    name: 'Rashid',
+    email: 'rashid@bperfume.com',
+    password: 'Rashid1234',
+    role: 'SUB_ADMIN',
+    destination: 'Executive Dashboard',
+    path: '/admin/dashboard',
+  },
+  // 8 Sales Agents
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Adarsh',
+    email: 'adarsh@bperfume.com',
+    password: 'Adarsh0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Fathimath Shifa',
+    email: 'fathimathshifa@bperfume.com',
+    password: 'FathimathShifa0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Nandana',
+    email: 'nandana@bperfume.com',
+    password: 'Nandana0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Nouf',
+    email: 'nouf@bperfume.com',
+    password: 'Nouf0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Rizvan',
+    email: 'rizvan@bperfume.com',
+    password: 'Rizvan0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Sajila',
+    email: 'sajila@bperfume.com',
+    password: 'Sajila0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Sajna',
+    email: 'sajna@bperfume.com',
+    password: 'Sajna0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+  {
+    roleCategory: 'Sales Agent',
+    name: 'Salih',
+    email: 'salih@bperfume.com',
+    password: 'Salih0000',
+    role: 'AGENT',
+    destination: 'Clean Chat Window',
+    path: '/agent/workspace',
+  },
+]
 
 export default function LoginPage() {
   const router = useRouter()
@@ -10,198 +129,319 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<{ title?: string; message: string; isCaseError?: boolean } | null>(null)
+  const [showDirectory, setShowDirectory] = useState(false)
+  const [activeTab, setActiveTab] = useState<'ALL' | 'ADMIN' | 'AGENT'>('ALL')
+
+  function handleQuickFill(acc: typeof SEEDED_TEAM_ACCOUNTS[0]) {
+    setEmail(acc.email)
+    setPassword(acc.password)
+    setError(null)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setError('')
-    const result = await signIn('credentials', { email, password, redirect: false })
-    if (result?.ok) {
-      router.push('/')
-    } else {
-      setError('Invalid luxury clienteling credentials. Please check your email and password.')
+    setError(null)
+
+    const cleanEmail = email.toLowerCase().trim()
+    const cleanPassword = password.trim()
+
+    // 1. Client-Side Case-Sensitivity Smart Verification
+    const matchingAccount = SEEDED_TEAM_ACCOUNTS.find(
+      acc => acc.email.toLowerCase() === cleanEmail
+    )
+
+    if (matchingAccount) {
+      if (
+        cleanPassword.toLowerCase() === matchingAccount.password.toLowerCase() &&
+        cleanPassword !== matchingAccount.password
+      ) {
+        setError({
+          title: 'Case-Sensitive Password Mismatch',
+          message: `Passwords are case-sensitive (e.g. '${matchingAccount.password}' with a capital '${matchingAccount.password[0]}'). Please check your uppercase and lowercase letters.`,
+          isCaseError: true,
+        })
+        setLoading(false)
+        return
+      }
+    }
+
+    try {
+      const result = await signIn('credentials', {
+        email: cleanEmail,
+        password: cleanPassword,
+        redirect: false,
+      })
+
+      if (result?.ok) {
+        // Determine role destination
+        const isAdminOrSub =
+          cleanEmail === 'admin@bperfume.com' ||
+          cleanEmail === 'alnas@bperfume.com' ||
+          cleanEmail === 'rashid@bperfume.com'
+
+        const destination = isAdminOrSub ? '/admin/dashboard' : '/agent/workspace'
+        window.location.href = destination
+        return
+      }
+
+      // Check if server flagged case-sensitivity
+      if (result?.error && result.error.includes('PASSWORD_CASE_SENSITIVE')) {
+        const expectedHint = result.error.split(':')[1] || (matchingAccount ? matchingAccount.password : 'Password')
+        setError({
+          title: 'Case-Sensitive Password Mismatch',
+          message: `Passwords are case-sensitive (e.g. '${expectedHint}' with a capital '${expectedHint[0]}'). Please check your uppercase and lowercase letters.`,
+          isCaseError: true,
+        })
+      } else {
+        // Fallback check against known list
+        if (matchingAccount && cleanPassword.toLowerCase() === matchingAccount.password.toLowerCase()) {
+          setError({
+            title: 'Case-Sensitive Password Mismatch',
+            message: `Passwords are case-sensitive (e.g. '${matchingAccount.password}' with a capital '${matchingAccount.password[0]}'). Please check your uppercase and lowercase letters.`,
+            isCaseError: true,
+          })
+        } else {
+          setError({
+            title: 'Authentication Failed',
+            message: 'Invalid official email or security password. Please verify your credentials and try again.',
+            isCaseError: false,
+          })
+        }
+      }
+    } catch (err: any) {
+      setError({
+        title: 'Connection Error',
+        message: 'Could not connect to authentication service. Please check your connection.',
+        isCaseError: false,
+      })
+    } finally {
       setLoading(false)
     }
   }
 
+  const filteredAccounts = SEEDED_TEAM_ACCOUNTS.filter(acc => {
+    if (activeTab === 'ADMIN') return acc.role === 'ADMIN' || acc.role === 'SUB_ADMIN'
+    if (activeTab === 'AGENT') return acc.role === 'AGENT'
+    return true
+  })
+
   return (
-    <div className="min-h-screen flex" style={{ background: '#FBF9F5' }}>
-      {/* Left — High-End Haute Parfumerie Editorial Panel */}
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-10" style={{ background: '#090A0F' }}>
+      {/* Subtle Monochromatic Grid / Glow Backdrop */}
       <div
-        className="hidden lg:flex flex-col justify-between w-[460px] flex-shrink-0 p-12 relative overflow-hidden"
-        style={{ background: '#0A0F1D' }}
-      >
-        {/* Subtle Luxury Gold Background Glow */}
+        className="fixed inset-0 pointer-events-none opacity-25"
+        style={{
+          backgroundImage: 'radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 60%)',
+        }}
+      />
+
+      <div className="w-full max-w-md relative z-10 space-y-6">
+        {/* Brand Header */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold tracking-widest uppercase border border-white/10 bg-white/5 text-zinc-300">
+            <ShieldCheck size={12} className="text-zinc-300" />
+            <span>Encrypted CRM Authentication</span>
+          </div>
+          <h1
+            style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+            className="text-3xl sm:text-4xl font-semibold text-white tracking-wider pt-1"
+          >
+            B Perfume
+          </h1>
+          <p className="text-xs font-medium tracking-widest uppercase text-zinc-400">
+            Haute Parfumerie · Client Access
+          </p>
+        </div>
+
+        {/* Monochromatic Login Card */}
         <div
-          className="absolute -top-24 -left-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-20"
-          style={{ background: '#C9A84C' }}
-        />
-        <div
-          className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full blur-3xl pointer-events-none opacity-10"
-          style={{ background: '#C9A84C' }}
-        />
-
-        {/* Brand Crest & Monogram */}
-        <div className="relative z-10">
-          <div className="mb-12">
-            <h2
-              style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
-              className="text-4xl font-semibold text-white tracking-wider"
-            >
-              B Perfume
-            </h2>
-            <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-amber-300/80 mt-1">
-              Haute Parfumerie · Paris &amp; Dubai
+          className="rounded-2xl p-6 sm:p-8 backdrop-blur-xl border border-white/10 shadow-2xl relative"
+          style={{ background: 'rgba(18, 19, 26, 0.85)' }}
+        >
+          <div className="mb-6 space-y-1">
+            <h2 className="text-xl font-medium text-white tracking-tight">Sign In</h2>
+            <p className="text-xs text-zinc-400">
+              Access your executive portal or advisor communication hub.
             </p>
           </div>
 
-          {/* Editorial Headline */}
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border"
-              style={{ background: 'rgba(201,168,76,0.12)', borderColor: 'rgba(201,168,76,0.35)', color: '#E8D5A0' }}>
-              <Sparkles size={11} style={{ color: '#C9A84C' }} />
-              <span>International Luxury Clienteling</span>
-            </div>
-
-            <h1 className="text-3xl font-serif font-medium text-white leading-tight">
-              Crafting Timeless<br />
-              <span style={{ color: '#C9A84C' }}>Olfactory Journeys</span><br />
-              Across the Globe.
-            </h1>
-
-            <p className="text-white/60 text-sm leading-relaxed font-light">
-              The exclusive client communication suite for B Perfume advisors. Managing bespoke consultations, 12-hour Extrait orders, and VIP clienteling across India and international markets.
-            </p>
-          </div>
-        </div>
-
-        {/* Perfume Signature Stats */}
-        <div className="grid grid-cols-2 gap-3.5 relative z-10 my-8">
-          {[
-            { label: 'Signature Extrait', value: 'CITYMAN', sub: '12h Long-Lasting' },
-            { label: 'Client Portfolio', value: '5,000+', sub: 'Indian High-Net-Worth' },
-            { label: 'Luxury Advisors', value: '8 Agents', sub: 'Dedicated Curation' },
-            { label: 'Client Concierge', value: '24/7 VIP', sub: 'WhatsApp First' },
-          ].map(s => (
-            <div
-              key={s.label}
-              className="rounded-2xl p-3.5 transition backdrop-blur-md"
-              style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(201,168,76,0.22)',
-              }}
-            >
-              <p className="text-xs font-semibold text-white/50">{s.label}</p>
-              <p className="text-lg font-bold mt-0.5 font-serif" style={{ color: '#C9A84C' }}>{s.value}</p>
-              <p className="text-[10px] text-white/40 mt-0.5">{s.sub}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="relative z-10 flex items-center justify-between text-xs text-white/30 pt-4 border-t border-white/10 font-light">
-          <span>© 2025 B Perfume International</span>
-          <span className="flex items-center gap-1"><ShieldCheck size={12} style={{ color: '#C9A84C' }} /> Encrypted CRM</span>
-        </div>
-      </div>
-
-      {/* Right — Refined Minimalist Login Form */}
-      <div className="flex-1 flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-sm space-y-8">
-          {/* Mobile Text Brand Name */}
-          <div className="lg:hidden text-center mb-6">
-            <h1
-              style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
-              className="text-3xl font-semibold text-slate-900 tracking-wider"
-            >
-              B Perfume
-            </h1>
-            <p className="text-[10px] font-semibold tracking-widest uppercase text-amber-700 mt-1">
-              Haute Parfumerie Clienteling
-            </p>
-          </div>
-
-          {/* Form Header */}
-          <div className="space-y-1 text-center lg:text-left">
-            <h2 className="text-2xl font-serif font-semibold text-slate-900 tracking-tight">Advisor Sign In</h2>
-            <p className="text-slate-500 text-xs">Access your personalized luxury consultation workspace</p>
-          </div>
-
+          {/* Smart Error Handling Banner */}
           {error && (
-            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
-              <span>{error}</span>
+            <div
+              className={`mb-5 p-4 rounded-xl border text-xs flex gap-3 items-start transition-all animate-in fade-in ${
+                error.isCaseError
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                  : 'bg-red-500/10 border-red-500/30 text-red-200'
+              }`}
+            >
+              <AlertCircle size={16} className={`flex-shrink-0 mt-0.5 ${error.isCaseError ? 'text-amber-400' : 'text-red-400'}`} />
+              <div className="space-y-1">
+                {error.title && <p className="font-semibold text-white">{error.title}</p>}
+                <p className="leading-relaxed opacity-95">{error.message}</p>
+              </div>
             </div>
           )}
 
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Field 1: Official Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Official Email</label>
+              <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
+                Official Email
+              </label>
               <div className="relative">
-                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="name@bperfume.com"
+                  onChange={e => {
+                    setEmail(e.target.value)
+                    if (error) setError(null)
+                  }}
+                  placeholder="admin@bperfume.com"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 transition bg-white shadow-2xs"
-                  style={{ '--tw-ring-color': '#C9A84C' } as any}
+                  autoComplete="email"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-zinc-700/80 bg-zinc-900/90 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-300 focus:ring-1 focus:ring-zinc-300 transition"
                 />
               </div>
             </div>
 
+            {/* Field 2: Security Password */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Security Password</label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+                  Security Password
+                </label>
+                <span className="text-[10px] text-zinc-400">Case-sensitive</span>
+              </div>
               <div className="relative">
-                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   type={showPw ? 'text' : 'password'}
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={e => {
+                    setPassword(e.target.value)
+                    if (error) setError(null)
+                  }}
                   placeholder="••••••••••••"
                   required
-                  className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 transition bg-white shadow-2xs"
-                  style={{ '--tw-ring-color': '#C9A84C' } as any}
+                  autoComplete="current-password"
+                  className="w-full pl-10 pr-11 py-3 rounded-xl border border-zinc-700/80 bg-zinc-900/90 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-300 focus:ring-1 focus:ring-zinc-300 transition font-mono tracking-tight"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
                 >
-                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                 </button>
               </div>
             </div>
 
+            {/* Submit Action */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl text-white text-xs font-semibold tracking-wider uppercase transition shadow-md flex items-center justify-center gap-2 active:scale-[0.99] disabled:opacity-60 cursor-pointer"
-              style={{
-                background: 'linear-gradient(135deg, #0A0F1D 0%, #161F36 100%)',
-                border: '1px solid rgba(201,168,76,0.3)',
-              }}
+              className="w-full mt-2 py-3.5 px-4 rounded-xl text-black bg-white hover:bg-zinc-200 active:scale-[0.99] font-medium text-xs tracking-wider uppercase transition shadow-lg flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
             >
               {loading ? (
                 <>
-                  <Loader2 size={14} className="animate-spin text-amber-400" />
-                  <span>Authenticating Advisor...</span>
+                  <Loader2 size={15} className="animate-spin text-black" />
+                  <span>Verifying Credentials...</span>
                 </>
               ) : (
-                <span>Open Luxury Workspace</span>
+                <>
+                  <span>Sign In to Workspace</span>
+                  <ArrowRight size={14} />
+                </>
               )}
             </button>
           </form>
 
-          {/* Security Note */}
-          <div className="pt-2 text-center">
-            <p className="text-[11px] text-slate-400 font-light flex items-center justify-center gap-1">
-              <ShieldCheck size={12} className="text-amber-600" />
-              <span>Restricted to Authorized B Perfume Staff</span>
-            </p>
+          {/* Quick Team Access Directory Toggle */}
+          <div className="mt-6 pt-5 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => setShowDirectory(!showDirectory)}
+              className="w-full flex items-center justify-between text-xs text-zinc-400 hover:text-white transition py-1"
+            >
+              <span className="flex items-center gap-2 font-medium">
+                <Users size={14} className="text-zinc-400" />
+                <span>Quick Team Directory (11 Accounts)</span>
+              </span>
+              {showDirectory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+
+            {/* Quick Fill Dropdown List */}
+            {showDirectory && (
+              <div className="mt-3 space-y-3 pt-2">
+                {/* Tabs */}
+                <div className="flex gap-1.5 p-1 rounded-lg bg-zinc-900/80 border border-zinc-800 text-[11px]">
+                  {(['ALL', 'ADMIN', 'AGENT'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setActiveTab(tab)}
+                      className={`flex-1 py-1 rounded-md font-semibold transition ${
+                        activeTab === tab
+                          ? 'bg-zinc-700 text-white'
+                          : 'text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      {tab === 'ALL' ? 'All (11)' : tab === 'ADMIN' ? 'Leadership (3)' : 'Agents (8)'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Team member accounts list */}
+                <div className="max-h-56 overflow-y-auto space-y-1.5 pr-1 text-xs">
+                  {filteredAccounts.map(acc => (
+                    <button
+                      key={acc.email}
+                      type="button"
+                      onClick={() => handleQuickFill(acc)}
+                      className="w-full text-left p-2.5 rounded-lg border border-zinc-800/80 hover:border-zinc-600 bg-zinc-900/40 hover:bg-zinc-800/60 transition flex items-center justify-between group"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-white truncate">{acc.name}</span>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded font-medium uppercase tracking-wider ${
+                              acc.role === 'ADMIN'
+                                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                : acc.role === 'SUB_ADMIN'
+                                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                                : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                            }`}
+                          >
+                            {acc.roleCategory}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 font-mono truncate mt-0.5">{acc.email}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <span className="text-[10px] text-zinc-400 group-hover:text-white group-hover:underline">
+                          Auto Fill →
+                        </span>
+                        <p className="text-[9px] text-zinc-500 truncate">{acc.destination}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Monochromatic Footer Info */}
+        <div className="text-center text-[11px] text-zinc-500 space-y-1">
+          <p>© 2025 B Perfume International · Encrypted Communication Gateway</p>
+          <p className="text-[10px] text-zinc-600">
+            Admins route to Executive Dashboard · Advisors route to Native Clean Chat
+          </p>
         </div>
       </div>
     </div>
