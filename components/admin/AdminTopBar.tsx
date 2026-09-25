@@ -10,9 +10,19 @@ export function AdminTopBar({ user }: Props) {
   const [open, setOpen] = useState(false)
   return (
     <header className="h-14 bg-white border-b border-slate-100 px-6 flex items-center justify-between flex-shrink-0">
-      <div className="flex items-center gap-2">
-        <Shield size={14} style={{ color: '#C9A84C' }} />
-        <span className="text-sm font-semibold text-slate-700">Admin Panel</span>
+      <div className="flex items-center gap-2.5">
+        <span
+          style={{
+            color: '#0A0F1D',
+            fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+            letterSpacing: '0.05em',
+          }}
+          className="text-base font-semibold"
+        >
+          B Perfume
+        </span>
+        <span className="text-slate-300">/</span>
+        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Executive Admin</span>
       </div>
       <div className="flex items-center gap-3">
         <ThemeToggle />

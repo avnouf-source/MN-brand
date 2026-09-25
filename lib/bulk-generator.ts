@@ -77,14 +77,14 @@ export interface GeneratedAgent {
 
 // Exactly 8 Sales Agents for B Perfume
 export const B_PERFUME_8_AGENTS: { id: string; name: string; email: string; department: string }[] = [
-  { id: 'agent-bperfume-1', name: 'Sara Al-Hashimi', email: 'sara@bperfume.com', department: 'Women Fragrance Curation' },
-  { id: 'agent-bperfume-2', name: 'Karim Mansour', email: 'karim@bperfume.com', department: 'Signature Scents (CITYMAN)' },
-  { id: 'agent-bperfume-3', name: 'Layla Vance', email: 'layla@bperfume.com', department: 'Private Client Scent Stylist' },
-  { id: 'agent-bperfume-4', name: 'Zayd Al-Otaibi', email: 'zayd@bperfume.com', department: 'Oriental & Oud Parfums' },
-  { id: 'agent-bperfume-5', name: 'Maya Sharma', email: 'maya@bperfume.com', department: 'India & South Asia VIP' },
-  { id: 'agent-bperfume-6', name: 'Rohan Verma', email: 'rohan@bperfume.com', department: 'Luxury Scent Concierge' },
-  { id: 'agent-bperfume-7', name: 'Ananya Iyer', email: 'ananya@bperfume.com', department: 'Bespoke Haute Parfumerie' },
-  { id: 'agent-bperfume-8', name: 'Vikram Patel', email: 'vikram@bperfume.com', department: 'Extrait Prestige Sales' },
+  { id: 'agent-bperfume-1', name: 'Adarsh', email: 'adarsh@bperfume.com', department: 'Signature Scents (CITYMAN)' },
+  { id: 'agent-bperfume-2', name: 'Fathimath Shifa', email: 'fathimathshifa@bperfume.com', department: 'Women Fragrance Curation' },
+  { id: 'agent-bperfume-3', name: 'Nandana', email: 'nandana@bperfume.com', department: 'Private Client Scent Stylist' },
+  { id: 'agent-bperfume-4', name: 'Nouf', email: 'nouf@bperfume.com', department: 'VIP Client Advisor' },
+  { id: 'agent-bperfume-5', name: 'Rizvan', email: 'rizvan@bperfume.com', department: 'Oriental & Oud Parfums' },
+  { id: 'agent-bperfume-6', name: 'Sajila', email: 'sajila@bperfume.com', department: 'Luxury Scent Concierge' },
+  { id: 'agent-bperfume-7', name: 'Sajna', email: 'sajna@bperfume.com', department: 'Bespoke Haute Parfumerie' },
+  { id: 'agent-bperfume-8', name: 'Salih', email: 'salih@bperfume.com', department: 'Extrait Prestige Sales' },
 ]
 
 export function generate8PerfumeAgents(): GeneratedAgent[] {

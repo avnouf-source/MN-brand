@@ -7,7 +7,6 @@ import { ContextPanel } from './ContextPanel'
 import { PipelineDashboard, getConvStatus } from './PipelineDashboard'
 import { LeadCaptureModal } from './LeadCaptureModal'
 import { Plus, MessageSquare, Info, List, Columns3, LayoutList, CheckSquare, Target, X, CheckCircle } from 'lucide-react'
-import { BPerfumeLogo, BPerfumeWordmark } from '@/components/shared/BPerfumeLogo'
 
 export interface Message {
   id: string; body: string; direction: string; type: string

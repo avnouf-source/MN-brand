@@ -8,44 +8,38 @@ const B_PERFUME_USERS = [
   // 1. Super Admin (Absolute System Control)
   {
     id: 'super-admin-nouf',
-    name: 'Nouf (Super Admin)',
-    email: 'nouf@bperfume.com',
-    password: 'nouf123',
-    role: 'ADMIN',
-  },
-  {
-    id: 'admin-alias',
-    name: 'Nouf (Super Admin)',
+    name: 'Nouf',
     email: 'admin@bperfume.com',
-    password: 'admin123',
+    password: 'Nouf1234',
     role: 'ADMIN',
   },
 
-  // 2. Sub-Admins (Managerial Access)
+  // 2. Sub-Admins (Managerial Access - 2 Users)
   {
-    id: 'subadmin-1',
-    name: 'Tariq Al-Mansoor (Sub-Admin)',
-    email: 'subadmin1@bperfume.com',
-    password: 'subadmin123',
+    id: 'subadmin-alnas',
+    name: 'Alnas',
+    email: 'alnas@bperfume.com',
+    password: 'Alnas1234',
     role: 'SUB_ADMIN',
   },
   {
-    id: 'subadmin-2',
-    name: 'Reem Al-Kuwari (Sub-Admin)',
-    email: 'subadmin2@bperfume.com',
-    password: 'subadmin123',
+    id: 'subadmin-rashid',
+    name: 'Rashid',
+    email: 'rashid@bperfume.com',
+    password: 'Rashid1234',
     role: 'SUB_ADMIN',
   },
 
   // 3. Exactly 8 Sales Agents
-  { id: 'agent-1', name: 'Sara Al-Hashimi', email: 'sara@bperfume.com', password: 'agent123', role: 'AGENT' },
-  { id: 'agent-2', name: 'Karim Mansour', email: 'karim@bperfume.com', password: 'agent123', role: 'AGENT' },
-  { id: 'agent-3', name: 'Layla Vance', email: 'layla@bperfume.com', password: 'agent123', role: 'AGENT' },
-  { id: 'agent-4', name: 'Zayd Al-Otaibi', email: 'zayd@bperfume.com', password: 'agent123', role: 'AGENT' },
-  { id: 'agent-5', name: 'Maya Sharma', email: 'maya@bperfume.com', password: 'agent123', role: 'AGENT' },
-  { id: 'agent-6', name: 'Rohan Verma', email: 'rohan@bperfume.com', password: 'agent123', role: 'AGENT' },
-  { id: 'agent-7', name: 'Ananya Iyer', email: 'ananya@bperfume.com', password: 'agent123', role: 'AGENT' },
-  { id: 'agent-8', name: 'Vikram Patel', email: 'vikram@bperfume.com', password: 'agent123', role: 'AGENT' },
+  { id: 'agent-1', name: 'Adarsh', email: 'adarsh@bperfume.com', password: 'Adarsh0000', role: 'AGENT' },
+  { id: 'agent-2', name: 'Fathimath Shifa', email: 'fathimathshifa@bperfume.com', password: 'FathimathShifa0000', role: 'AGENT' },
+  { id: 'agent-2-alias', name: 'Fathimath Shifa', email: 'fathimath@bperfume.com', password: 'FathimathShifa0000', role: 'AGENT' },
+  { id: 'agent-3', name: 'Nandana', email: 'nandana@bperfume.com', password: 'Nandana0000', role: 'AGENT' },
+  { id: 'agent-4', name: 'Nouf', email: 'nouf@bperfume.com', password: 'Nouf0000', role: 'AGENT' },
+  { id: 'agent-5', name: 'Rizvan', email: 'rizvan@bperfume.com', password: 'Rizvan0000', role: 'AGENT' },
+  { id: 'agent-6', name: 'Sajila', email: 'sajila@bperfume.com', password: 'Sajila0000', role: 'AGENT' },
+  { id: 'agent-7', name: 'Sajna', email: 'sajna@bperfume.com', password: 'Sajna0000', role: 'AGENT' },
+  { id: 'agent-8', name: 'Salih', email: 'salih@bperfume.com', password: 'Salih0000', role: 'AGENT' },
 ]
 
 export const authOptions: NextAuthOptions = {

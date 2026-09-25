@@ -2,7 +2,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Sparkles, Users, Bot, FileText, Settings, MessageCircle, ClipboardList, ShieldCheck } from 'lucide-react'
-import { BPerfumeLogo } from '@/components/shared/BPerfumeLogo'
 
 const NAV = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -19,17 +18,17 @@ export function AdminSidebar() {
   const path = usePathname()
   return (
     <div className="w-60 flex-shrink-0 flex flex-col h-full" style={{ background: '#0A0F1D' }}>
-      {/* Logo */}
+      {/* Brand Name Typography */}
       <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center gap-3">
-          <BPerfumeLogo size="sm" variant="dark" />
-          <div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-sm font-bold text-white tracking-wider font-serif">B PERFUME</span>
-            </div>
-            <p className="text-[8px] font-semibold tracking-widest uppercase text-amber-300/80">Haute Parfumerie</p>
-          </div>
-        </div>
+        <h2
+          style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+          className="text-lg font-semibold text-white tracking-wider"
+        >
+          B Perfume
+        </h2>
+        <p className="text-[9px] font-semibold tracking-widest uppercase text-amber-300/80 mt-0.5">
+          Haute Parfumerie
+        </p>
       </div>
 
       {/* Nav */}

@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Mail, Lock, Eye, EyeOff, Sparkles, ShieldCheck } from 'lucide-react'
-import { BPerfumeLogo, BPerfumeWordmark } from '@/components/shared/BPerfumeLogo'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -45,16 +44,16 @@ export default function LoginPage() {
 
         {/* Brand Crest & Monogram */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3.5 mb-14">
-            <BPerfumeLogo size="lg" variant="dark" />
-            <div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-white tracking-widest font-serif">B PERFUME</span>
-              </div>
-              <p className="text-[9px] font-semibold tracking-[0.25em] uppercase text-amber-300/80 mt-0.5">
-                Haute Parfumerie · Paris &amp; Dubai
-              </p>
-            </div>
+          <div className="mb-12">
+            <h2
+              style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+              className="text-4xl font-semibold text-white tracking-wider"
+            >
+              B Perfume
+            </h2>
+            <p className="text-[10px] font-semibold tracking-[0.25em] uppercase text-amber-300/80 mt-1">
+              Haute Parfumerie · Paris &amp; Dubai
+            </p>
           </div>
 
           {/* Editorial Headline */}
@@ -110,15 +109,17 @@ export default function LoginPage() {
       {/* Right — Refined Minimalist Login Form */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12">
         <div className="w-full max-w-sm space-y-8">
-          {/* Mobile Brand Crest */}
-          <div className="lg:hidden flex flex-col items-center text-center gap-2 mb-6">
-            <BPerfumeLogo size="lg" variant="light" />
-            <div>
-              <h2 className="text-2xl font-serif font-bold text-slate-900 tracking-wider">B PERFUME</h2>
-              <p className="text-[10px] font-semibold tracking-widest uppercase text-amber-700 mt-0.5">
-                Haute Parfumerie Clienteling
-              </p>
-            </div>
+          {/* Mobile Text Brand Name */}
+          <div className="lg:hidden text-center mb-6">
+            <h1
+              style={{ fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif" }}
+              className="text-3xl font-semibold text-slate-900 tracking-wider"
+            >
+              B Perfume
+            </h1>
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-amber-700 mt-1">
+              Haute Parfumerie Clienteling
+            </p>
           </div>
 
           {/* Form Header */}

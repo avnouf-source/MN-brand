@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { signOut } from 'next-auth/react'
 import { Bell, ChevronDown, LogOut, Shield, Globe, PhoneCall } from 'lucide-react'
 import Link from 'next/link'
-import { MNWordmark } from '@/components/shared/MNLogo'
 import { GlobalDialerModal } from '@/components/agent/GlobalDialerModal'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 
@@ -32,8 +31,19 @@ export function AgentTopBar({ user }: Props) {
   return (
     <>
       <header className="h-14 bg-white border-b border-slate-100 px-4 flex items-center justify-between flex-shrink-0 z-10 shadow-xs">
-        {/* Logo wordmark */}
-        <MNWordmark variant="dark" />
+        {/* Clean Typography Brand Name */}
+        <div className="flex items-center">
+          <span
+            style={{
+              color: '#0A0F1D',
+              fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+              letterSpacing: '0.08em',
+            }}
+            className="text-base font-semibold tracking-wider"
+          >
+            B Perfume
+          </span>
+        </div>
 
         <div className="flex items-center gap-2">
           {/* Direct International Calling / Global Dialer Button */}

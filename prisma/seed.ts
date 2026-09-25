@@ -7,29 +7,53 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Seeding B Perfume Haute Parfumerie CRM...')
 
-  const superAdminHash = await bcrypt.hash('nouf123', 10)
-  const subAdminHash = await bcrypt.hash('subadmin123', 10)
-  const agentHash = await bcrypt.hash('agent123', 10)
+  // Delete legacy users not in the new roster
+  const validEmails = [
+    'admin@bperfume.com',
+    'alnas@bperfume.com',
+    'rashid@bperfume.com',
+    'adarsh@bperfume.com',
+    'fathimathshifa@bperfume.com',
+    'nandana@bperfume.com',
+    'nouf@bperfume.com',
+    'rizvan@bperfume.com',
+    'sajila@bperfume.com',
+    'sajna@bperfume.com',
+    'salih@bperfume.com',
+  ]
+
+  try {
+    await prisma.user.deleteMany({
+      where: {
+        email: { notIn: validEmails },
+      },
+    })
+    console.log('🧹 Purged obsolete user accounts.')
+  } catch (err) {
+    console.warn('Note on user cleanup:', err)
+  }
+
+  const superAdminHash = await bcrypt.hash('Nouf1234', 10)
+  const alnasHash = await bcrypt.hash('Alnas1234', 10)
+  const rashidHash = await bcrypt.hash('Rashid1234', 10)
+
+  const agentPasswords: Record<string, string> = {
+    'adarsh@bperfume.com': 'Adarsh0000',
+    'fathimathshifa@bperfume.com': 'FathimathShifa0000',
+    'nandana@bperfume.com': 'Nandana0000',
+    'nouf@bperfume.com': 'Nouf0000',
+    'rizvan@bperfume.com': 'Rizvan0000',
+    'sajila@bperfume.com': 'Sajila0000',
+    'sajna@bperfume.com': 'Sajna0000',
+    'salih@bperfume.com': 'Salih0000',
+  }
 
   // 1. Super Admin: Nouf
   const nouf = await prisma.user.upsert({
-    where: { email: 'nouf@bperfume.com' },
-    update: { name: 'Nouf (Super Admin)', role: 'ADMIN', department: 'Executive Management' },
-    create: {
-      name: 'Nouf (Super Admin)',
-      email: 'nouf@bperfume.com',
-      passwordHash: superAdminHash,
-      role: 'ADMIN',
-      department: 'Executive Management',
-    },
-  })
-
-  // Super Admin Alias
-  await prisma.user.upsert({
     where: { email: 'admin@bperfume.com' },
-    update: { name: 'Nouf (Super Admin)', role: 'ADMIN' },
+    update: { name: 'Nouf', passwordHash: superAdminHash, role: 'ADMIN', department: 'Executive Management' },
     create: {
-      name: 'Nouf (Super Admin)',
+      name: 'Nouf',
       email: 'admin@bperfume.com',
       passwordHash: superAdminHash,
       role: 'ADMIN',
@@ -37,26 +61,26 @@ async function main() {
     },
   })
 
-  // 2. Sub-Admins (2)
+  // 2. Sub-Admins (2 Users: Alnas & Rashid)
   const subAdmin1 = await prisma.user.upsert({
-    where: { email: 'subadmin1@bperfume.com' },
-    update: { role: 'SUB_ADMIN', department: 'Fragrance Operations' },
+    where: { email: 'alnas@bperfume.com' },
+    update: { name: 'Alnas', passwordHash: alnasHash, role: 'SUB_ADMIN', department: 'Fragrance Operations' },
     create: {
-      name: 'Tariq Al-Mansoor',
-      email: 'subadmin1@bperfume.com',
-      passwordHash: subAdminHash,
+      name: 'Alnas',
+      email: 'alnas@bperfume.com',
+      passwordHash: alnasHash,
       role: 'SUB_ADMIN',
       department: 'Fragrance Operations',
     },
   })
 
   const subAdmin2 = await prisma.user.upsert({
-    where: { email: 'subadmin2@bperfume.com' },
-    update: { role: 'SUB_ADMIN', department: 'VIP Client Experience' },
+    where: { email: 'rashid@bperfume.com' },
+    update: { name: 'Rashid', passwordHash: rashidHash, role: 'SUB_ADMIN', department: 'VIP Client Experience' },
     create: {
-      name: 'Reem Al-Kuwari',
-      email: 'subadmin2@bperfume.com',
-      passwordHash: subAdminHash,
+      name: 'Rashid',
+      email: 'rashid@bperfume.com',
+      passwordHash: rashidHash,
       role: 'SUB_ADMIN',
       department: 'VIP Client Experience',
     },
@@ -67,13 +91,16 @@ async function main() {
   const createdAgents: any[] = []
 
   for (const a of rawAgents) {
+    const rawPw = agentPasswords[a.email] || `${a.name.replace(/\s+/g, '')}0000`
+    const pwHash = await bcrypt.hash(rawPw, 10)
+
     const ag = await prisma.user.upsert({
       where: { email: a.email },
-      update: { name: a.name, department: a.department, status: a.status },
+      update: { name: a.name, passwordHash: pwHash, department: a.department, status: a.status },
       create: {
         name: a.name,
         email: a.email,
-        passwordHash: agentHash,
+        passwordHash: pwHash,
         role: 'AGENT',
         department: a.department,
         status: a.status,
@@ -190,10 +217,10 @@ async function main() {
   }
 
   console.log('✅ B Perfume seed completed successfully!')
-  console.log('👑 Super Admin:  nouf@bperfume.com / nouf123')
-  console.log('🛡️ Sub-Admin 1:  subadmin1@bperfume.com / subadmin123')
-  console.log('🛡️ Sub-Admin 2:  subadmin2@bperfume.com / subadmin123')
-  console.log('👤 Sales Agents: sara@bperfume.com to vikram@bperfume.com / agent123 (8 agents)')
+  console.log('👑 Super Admin:  admin@bperfume.com / Nouf1234 (Nouf)')
+  console.log('🛡️ Sub-Admin 1:  alnas@bperfume.com / Alnas1234 (Alnas)')
+  console.log('🛡️ Sub-Admin 2:  rashid@bperfume.com / Rashid1234 (Rashid)')
+  console.log('👤 Sales Agents: 8 Accounts (Adarsh0000, FathimathShifa0000, Nandana0000, Nouf0000, Rizvan0000, Sajila0000, Sajna0000, Salih0000)')
 }
 
 main()

@@ -142,7 +142,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.setAttribute('download', `MN_Brand_Team_Performance_${Date.now()}.csv`)
+    link.setAttribute('download', `B_Perfume_Team_Performance_${Date.now()}.csv`)
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -216,7 +216,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
               </div>
               <div>
                 <h4 className="text-sm font-bold text-slate-900 font-serif">Nouf</h4>
-                <p className="text-[11px] font-mono text-slate-500">nouf@bperfume.com</p>
+                <p className="text-[11px] font-mono text-slate-500">admin@bperfume.com</p>
               </div>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase"
@@ -238,8 +238,8 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
                 <Shield size={16} className="text-amber-600" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-900">Tariq Al-Mansoor</h4>
-                <p className="text-[11px] font-mono text-slate-500">subadmin1@bperfume.com</p>
+                <h4 className="text-sm font-semibold text-slate-900">Alnas</h4>
+                <p className="text-[11px] font-mono text-slate-500">alnas@bperfume.com</p>
               </div>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600 border border-slate-200">
@@ -259,8 +259,8 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
                 <Shield size={16} className="text-amber-600" />
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-slate-900">Reem Al-Kuwari</h4>
-                <p className="text-[11px] font-mono text-slate-500">subadmin2@bperfume.com</p>
+                <h4 className="text-sm font-semibold text-slate-900">Rashid</h4>
+                <p className="text-[11px] font-mono text-slate-500">rashid@bperfume.com</p>
               </div>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-slate-100 text-slate-600 border border-slate-200">
