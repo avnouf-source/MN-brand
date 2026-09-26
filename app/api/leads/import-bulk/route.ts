@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { logAuditEvent } from '@/lib/audit'
 
 export const dynamic = 'force-dynamic'
 
@@ -180,6 +181,22 @@ export async function POST(req: NextRequest) {
     }
 
     const durationMs = Date.now() - startTime
+
+    // Log in Enterprise Audit Trail
+    try {
+      const admin = session?.user as any
+      await logAuditEvent({
+        agentId: admin?.id || 'admin-super',
+        agentName: admin?.name || 'Super Admin',
+        action: 'Automated Bulk Lead Routing',
+        target: `${distributedRecords.length.toLocaleString('en-IN')} Leads Routed via Round-Robin`,
+        severity: 'INFO',
+        details: `Equally partitioned across ${agents.length} active sales advisors. Parity: ~${Math.round(distributedRecords.length / agents.length)} leads/agent.`,
+        ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
+      })
+    } catch (e) {
+      console.warn('[Audit Log] Bulk import logging error:', e)
+    }
 
     return NextResponse.json({
       success: true,

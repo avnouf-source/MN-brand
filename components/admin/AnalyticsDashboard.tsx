@@ -1,5 +1,7 @@
 'use client'
 import { useState, useMemo, useCallback, memo } from 'react'
+import confetti from 'canvas-confetti'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import {
   BarChart,
   Bar,
@@ -34,6 +36,13 @@ import {
   UploadCloud,
   Check,
   Loader2,
+  Trophy,
+  Flame,
+  MapPin,
+  Layers,
+  ArrowUp,
+  ArrowDown,
+  PartyPopper,
 } from 'lucide-react'
 import { SUPPORTED_CURRENCIES, formatCurrencyValue } from '@/lib/countries'
 import { generateExecutiveReportPDF } from '@/lib/exportPdf'
@@ -155,6 +164,72 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
       }
     })
   }, [cfg])
+
+  // Milestone Celebrations (Micro-interactions)
+  const [showMilestoneBanner, setShowMilestoneBanner] = useState(false)
+  const triggerMilestoneCelebration = useCallback(() => {
+    setShowMilestoneBanner(true)
+    try {
+      confetti({
+        particleCount: 160,
+        spread: 90,
+        origin: { y: 0.55 },
+        colors: ['#C9A84C', '#F59E0B', '#10B981', '#0F1729', '#E2E8F0'],
+      })
+    } catch (e) {
+      console.warn('Confetti error:', e)
+    }
+    setTimeout(() => setShowMilestoneBanner(false), 8000)
+  }, [])
+
+  // Sales Gamification Leaderboard: 100 Flacons/month target per advisor
+  const rankedLeaderboard = useMemo(() => {
+    return [...advisorPerformance]
+      .sort((a, b) => b.closedOrders - a.closedOrders)
+      .map((adv, idx) => {
+        const monthlyTarget = 100
+        const progress = Math.min(100, Math.round((adv.closedOrders / monthlyTarget) * 100))
+        return {
+          ...adv,
+          rank: idx + 1,
+          monthlyTarget,
+          progress,
+          badge:
+            idx === 0
+              ? '🥇 Top Closer'
+              : idx === 1
+              ? '🥈 Master Advisor'
+              : idx === 2
+              ? '🥉 Elite Specialist'
+              : '🏅 Luxury Advisor',
+        }
+      })
+  }, [advisorPerformance])
+
+  // Modular Draggable / Customizable layout
+  const [widgetOrder, setWidgetOrder] = useState<string[]>([
+    'kpis',
+    'leaderboard',
+    'geoHeatmap',
+    'charts',
+    'advisorTable',
+    'fragranceCatalog',
+  ])
+  const [showLayoutCustomizer, setShowLayoutCustomizer] = useState(false)
+
+  const moveWidget = (id: string, direction: 'up' | 'down') => {
+    setWidgetOrder(prev => {
+      const idx = prev.indexOf(id)
+      if (idx < 0) return prev
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1
+      if (targetIdx < 0 || targetIdx >= prev.length) return prev
+      const updated = [...prev]
+      const temp = updated[idx]
+      updated[idx] = updated[targetIdx]
+      updated[targetIdx] = temp
+      return updated
+    })
+  }
 
   // PDF Export Engine (Super Admin Report)
   const handleDownloadPDF = useCallback(() => {
@@ -496,6 +571,33 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
             <span>Import Leads (Round-Robin)</span>
           </button>
 
+          {/* Milestone Celebration Button */}
+          <button
+            onClick={triggerMilestoneCelebration}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-400 bg-amber-400/20 hover:bg-amber-400/30 text-xs font-bold text-amber-900 transition shadow-2xs active:scale-95"
+            title="Celebrate Major Sales Team Milestone (Confetti)"
+          >
+            <PartyPopper size={13} className="text-amber-700" />
+            <span className="hidden sm:inline">Celebrate 500+</span>
+          </button>
+
+          {/* Modular Layout Toggle */}
+          <button
+            onClick={() => setShowLayoutCustomizer(!showLayoutCustomizer)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition shadow-2xs active:scale-95 ${
+              showLayoutCustomizer
+                ? 'bg-slate-900 text-amber-300 border-amber-400'
+                : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+            }`}
+            title="Customize and reorder dashboard widgets"
+          >
+            <Layers size={13} style={{ color: '#C9A84C' }} />
+            <span className="hidden md:inline">Layout</span>
+          </button>
+
+          {/* Theme Toggle for Dark Mode / Light Mode */}
+          <ThemeToggle />
+
           {/* Print / Save PDF Dossier */}
           <button
             onClick={handleOpenPrint}
@@ -508,6 +610,86 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
           </button>
         </div>
       </div>
+
+      {/* Milestone Celebrations Banner (Micro-interactions) */}
+      {showMilestoneBanner && (
+        <div className="p-4 rounded-2xl bg-linear-to-r from-amber-400 via-amber-300 to-yellow-400 text-slate-950 font-serif shadow-xl flex items-center justify-between animate-pulse border border-amber-500/40">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center text-amber-400 shadow-md">
+              <Trophy size={20} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold tracking-wide">
+                🎉 Collective Milestone Achieved! 500+ Luxury Flacons Converted!
+              </h4>
+              <p className="text-xs text-slate-900/80 font-sans font-medium">
+                The 8 B Perfume Luxury Fragrance Advisors have officially surpassed 500 luxury client conversions across India!
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowMilestoneBanner(false)}
+            className="w-7 h-7 rounded-full bg-slate-950/20 hover:bg-slate-950/40 flex items-center justify-center text-slate-950 font-bold"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* Modular Layout Reorder Panel */}
+      {showLayoutCustomizer && (
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-lg space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Layers size={16} className="text-amber-500" />
+              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                Draggable &amp; Modular Widget Customizer
+              </h4>
+            </div>
+            <span className="text-[11px] text-slate-400">Reorder widgets to personalize your workspace</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {widgetOrder.map((wid, idx) => {
+              const labelMap: Record<string, string> = {
+                kpis: '1. KPI Metric Ribbon',
+                leaderboard: '2. Sales Leaderboard',
+                geoHeatmap: '3. Indian Geo-Heatmap',
+                charts: '4. Fragrance Charts',
+                advisorTable: '5. 8 Advisors Roster',
+                fragranceCatalog: '6. Scent Ranking',
+              }
+              return (
+                <div
+                  key={wid}
+                  className="p-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-slate-800/80 flex items-center justify-between text-xs"
+                >
+                  <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                    {labelMap[wid] || wid}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => moveWidget(wid, 'up')}
+                      disabled={idx === 0}
+                      className="p-1 rounded-sm hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
+                      title="Move Up"
+                    >
+                      <ArrowUp size={12} />
+                    </button>
+                    <button
+                      onClick={() => moveWidget(wid, 'down')}
+                      disabled={idx === widgetOrder.length - 1}
+                      className="p-1 rounded-sm hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-30"
+                      title="Move Down"
+                    >
+                      <ArrowDown size={12} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Timeframe Banner Indicator */}
       <div className="flex items-center justify-between text-xs px-4 py-2 rounded-xl bg-amber-50/70 border border-amber-200/60 text-amber-900">
@@ -585,27 +767,134 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
         </div>
       </div>
 
-      {/* Regional Indian Luxury Demand Map (INR Default) */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-6 shadow-sm space-y-4">
+      {/* 2. Performance Leaderboard & Sales Gamification Module */}
+      <div className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-white/5 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-amber-400 bg-slate-950 dark:bg-amber-400/10 border border-amber-400/30">
+              <Trophy size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white font-serif tracking-wide">
+                Sales Gamification &amp; Performance Leaderboard
+              </h3>
+              <p className="text-xs text-slate-400">
+                Monthly Target: 100 Flacons Closed per Advisor • Real-time Conversion Velocity Ranking
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+              8 Advisors Active
+            </span>
+          </div>
+        </div>
+
+        {/* Podium Top 3 Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+          {rankedLeaderboard.slice(0, 3).map((leadAdv) => (
+            <div
+              key={leadAdv.email}
+              className={`p-4 rounded-2xl border transition shadow-xs relative overflow-hidden ${
+                leadAdv.rank === 1
+                  ? 'bg-linear-to-b from-amber-500/15 via-amber-400/5 to-transparent border-amber-400/60 dark:border-amber-400/40'
+                  : leadAdv.rank === 2
+                  ? 'bg-linear-to-b from-slate-200/50 to-transparent border-slate-300 dark:border-white/20'
+                  : 'bg-linear-to-b from-amber-700/15 to-transparent border-amber-600/40 dark:border-amber-600/30'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold font-serif px-2.5 py-0.5 rounded-full bg-slate-950 text-amber-300 shadow-2xs">
+                  {leadAdv.badge}
+                </span>
+                <span className="text-[11px] font-mono font-bold text-emerald-600">
+                  {leadAdv.conversion} Conv.
+                </span>
+              </div>
+              <div className="flex items-center gap-2.5 my-2">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: '#0F1729' }}>
+                  {leadAdv.name.charAt(0)}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">{leadAdv.name}</h4>
+                  <span className="text-[10px] text-slate-400 block">{leadAdv.email}</span>
+                </div>
+              </div>
+
+              {/* Monthly Target Progress Bar */}
+              <div className="mt-3 space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500 dark:text-slate-400">Monthly Target (100 Flacons):</span>
+                  <span className="font-mono font-bold text-slate-900 dark:text-amber-300">
+                    {leadAdv.closedOrders} / {leadAdv.monthlyTarget} ({leadAdv.progress}%)
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${leadAdv.progress}%`,
+                      background: leadAdv.rank === 1 ? 'linear-gradient(90deg, #F59E0B, #C9A84C)' : '#0F1729',
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 4th-8th Rank Table */}
+        <div className="border border-slate-200/80 dark:border-white/10 rounded-2xl overflow-hidden mt-3">
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {rankedLeaderboard.slice(3).map(adv => (
+              <div key={adv.email} className="px-4 py-2.5 flex items-center justify-between text-xs hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                <div className="flex items-center gap-3">
+                  <span className="w-5 text-center font-bold text-slate-400 font-mono">#{adv.rank}</span>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ background: '#0F1729' }}>
+                    {adv.name.charAt(0)}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">{adv.name}</span>
+                    <span className="text-[10px] text-slate-400 ml-2">{adv.speed} avg response</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  <div className="w-32 hidden sm:block">
+                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${adv.progress}%` }} />
+                    </div>
+                  </div>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{adv.closedOrders} Bottles</span>
+                  <span className="font-mono text-emerald-600 font-semibold">{adv.conversion}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Geo-Heatmap Widget: Regional Indian Luxury Demand Map (INR Default) */}
+      <div className="bg-white/95 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-white/10 p-5 sm:p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center text-white"
               style={{ background: '#0A0F1D' }}
             >
-              <Globe size={16} style={{ color: '#C9A84C' }} />
+              <MapPin size={16} style={{ color: '#C9A84C' }} />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-900 font-serif">
-                Indian Luxury Fragrance Regional Demand
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white font-serif">
+                Indian Luxury Fragrance Geo-Heatmap
               </h3>
               <p className="text-xs text-slate-400">
-                High-net-worth client concentration purchasing CITYMAN &amp; Oud Royale Extrait
+                Regional client density heat concentration purchasing CITYMAN &amp; Oud Royale Extrait
               </p>
             </div>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 self-start sm:self-auto">
-            6 Key Metro Hubs
+            Live Geo-Telemetry Active
           </span>
         </div>
 

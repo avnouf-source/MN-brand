@@ -23,6 +23,46 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
   }
 
+  const openAiKey = process.env.OPENAI_API_KEY
+  if (openAiKey && openAiKey !== 'demo_dummy_key') {
+    try {
+      const openAiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openAiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are the Executive AI Fragrance Intelligence Copilot for B Perfume Haute Parfumerie, assisting the Super Admin (Nouf). You analyze CRM metrics across 5,000 Indian leads, 8 dedicated luxury sales advisors (Adarsh, Fathimath Shifa, Nandana, Nouf, Rizvan, Sajila, Sajna, Salih), CITYMAN Extrait sales, and provide concise, executive-grade answers.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 600,
+        }),
+      })
+
+      if (openAiRes.ok) {
+        const data = await openAiRes.json()
+        const gptAnswer = data?.choices?.[0]?.message?.content
+        if (gptAnswer) {
+          return NextResponse.json({
+            answer: gptAnswer,
+            model: 'GPT-4o (Live OpenAI)',
+            timestamp: new Date().toISOString(),
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('[OpenAI Copilot Fallback]:', err)
+    }
+  }
+
   // Gather current lead & agent metrics
   let totalLeads = 5000
   let stageCounts: Record<string, number> = {

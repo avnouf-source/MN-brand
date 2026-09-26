@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, memo } from 'react'
+import { useState, useEffect, useRef, useMemo, memo } from 'react'
 import {
   Paperclip,
   Send,
@@ -25,7 +25,7 @@ import { QuickLuxuryRepliesMenu } from './QuickLuxuryRepliesMenu'
 import { OFFICIAL_PERFUME_CATALOG, PerfumeProduct, findPerfumeByText } from '@/lib/products'
 import type { Lead, Message, QuickReply } from './AgentWorkspace'
 import { formatPhoneDisplay, parsePhone, waLink, telLink, getCountryLocalTime } from '@/lib/countries'
-import { analyzeSentiment, calculatePredictiveScore } from '@/lib/ai-scoring'
+import { analyzeSentiment, calculatePredictiveScore, generateSmartReplies, calculateAutoTag } from '@/lib/ai-scoring'
 import {
   SYSTEM_LEAD_LABELS,
   SYSTEM_LABEL_KEYS,
@@ -106,6 +106,15 @@ export const ChatWindow = memo(function ChatWindow({
   const sentimentInfo = analyzeSentiment(msgs)
   const scoreInfo = calculatePredictiveScore(lead)
   const currentStageName = STAGE_LABELS[lead.stage] || 'Active Consultation'
+
+  const lastCustomerMsg = [...msgs].reverse().find(m => m.direction === 'INBOUND')?.body || ''
+  const smartReplies = useMemo(() => {
+    return generateSmartReplies(lead, lastCustomerMsg)
+  }, [lead, lastCustomerMsg])
+
+  const autoTag = useMemo(() => {
+    return calculateAutoTag(lead, msgs)
+  }, [lead, msgs])
 
   useEffect(() => {
     btm.current?.scrollIntoView({ behavior: 'smooth' })
@@ -241,10 +250,23 @@ export const ChatWindow = memo(function ChatWindow({
             >
               {lead.name.charAt(0)}
             </div>
-            <div className="truncate">
+            <div className="truncate flex items-center gap-2">
               <span className="text-sm font-semibold text-[#0A0F1D] tracking-tight group-hover:underline">
                 {lead.name}
               </span>
+              {lead.leadSource?.toLowerCase().includes('instagram') ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-200">
+                  📷 Instagram
+                </span>
+              ) : lead.leadSource?.toLowerCase().includes('messenger') ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  💬 Messenger
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  🟢 WhatsApp
+                </span>
+              )}
             </div>
           </button>
         </div>
@@ -360,6 +382,27 @@ export const ChatWindow = memo(function ChatWindow({
               setShowInvoiceModal(true)
             }}
           />
+        </div>
+      )}
+
+      {/* AI-Powered Smart Replies Bar (1-Click Suggestions) */}
+      {smartReplies.length > 0 && (
+        <div className="px-4 py-1.5 bg-slate-50/90 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-shrink-0">
+          <div className="flex items-center gap-1 text-[10px] font-bold text-amber-800 uppercase tracking-wider flex-shrink-0 mr-1">
+            <Sparkles size={11} style={{ color: '#C9A84C' }} />
+            <span>AI Suggest:</span>
+          </div>
+          {smartReplies.map((sr: any) => (
+            <button
+              key={sr.id}
+              type="button"
+              onClick={() => send(sr.text)}
+              className="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-medium bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900 border border-slate-200 hover:border-amber-300 transition shadow-2xs active:scale-95 cursor-pointer"
+              title={`Click to send immediately:\n"${sr.text}"`}
+            >
+              {sr.label}
+            </button>
+          ))}
         </div>
       )}
 

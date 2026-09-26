@@ -1,6 +1,6 @@
 'use client'
-import { useState, useMemo } from 'react'
-import { Search, Download, Shield, Filter, AlertTriangle, CheckCircle, Clock, Users, ArrowUpRight } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import { Search, Download, Shield, Filter, AlertTriangle, CheckCircle, Clock, Users, ArrowUpRight, RefreshCw } from 'lucide-react'
 import { generate50Agents } from '@/lib/bulk-generator'
 
 export interface LogEntry {
@@ -24,7 +24,7 @@ export function generateInitialLogs(): LogEntry[] {
     { action: 'SLA Escalation Reassignment', target: 'Lead #108 reassigned (15m SLA Breach)', severity: 'WARNING' as const },
     { action: 'GDPR Right to be Forgotten', target: 'Customer record anonymized upon request', severity: 'SECURITY' as const },
     { action: 'Bulk Template Broadcast', target: 'Sent welcome_international_lead to 40 contacts', severity: 'INFO' as const },
-    { action: 'Deal Finalized', target: 'Marked Lead #304 as DONE ($4,500 ACV)', severity: 'INFO' as const },
+    { action: 'Deal Finalized', target: 'Marked Lead #304 as DONE (₹46,000 INR)', severity: 'INFO' as const },
     { action: 'Unusual Login Location', target: 'Login from unrecognized IP address', severity: 'SECURITY' as const },
     { action: 'Internal Note Added', target: 'VIP Customization requirements noted', severity: 'INFO' as const },
     { action: 'Contact Details Exported', target: 'Exported pipeline batch for regional review', severity: 'WARNING' as const },
@@ -33,7 +33,7 @@ export function generateInitialLogs(): LogEntry[] {
   const logs: LogEntry[] = []
   const now = Date.now()
 
-  for (let i = 1; i <= 60; i++) {
+  for (let i = 1; i <= 40; i++) {
     const ag = agents[(i * 3) % agents.length]
     const act = actions[i % actions.length]
     const minutesAgo = i * 14
@@ -48,7 +48,7 @@ export function generateInitialLogs(): LogEntry[] {
       target: act.target,
       severity: act.severity,
       ipAddress: `185.${120 + (i % 50)}.${10 + (i % 80)}.${2 + (i % 200)}`,
-      location: i % 3 === 0 ? 'Dubai, UAE' : i % 3 === 1 ? 'London, UK' : 'Riyadh, KSA',
+      location: i % 3 === 0 ? 'Mumbai, MH' : i % 3 === 1 ? 'Delhi NCR' : 'Bangalore, KA',
     })
   }
 
@@ -56,10 +56,48 @@ export function generateInitialLogs(): LogEntry[] {
 }
 
 export function ActivityLogs() {
-  const [logs] = useState<LogEntry[]>(generateInitialLogs)
+  const [logs, setLogs] = useState<LogEntry[]>(generateInitialLogs)
   const [search, setSearch] = useState('')
   const [severityFilter, setSeverityFilter] = useState('ALL')
   const [deptFilter, setDeptFilter] = useState('ALL')
+  const [loading, setLoading] = useState(false)
+
+  const fetchLiveLogs = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/audit-logs?limit=100')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.logs && Array.isArray(data.logs) && data.logs.length > 0) {
+          const formatted: LogEntry[] = data.logs.map((l: any, idx: number) => ({
+            id: l.id || `live-${idx}`,
+            timestamp: l.timestamp || new Date().toISOString(),
+            agentName: l.agentName || 'Agent',
+            agentDepartment: 'Luxury Sales',
+            action: l.action || 'Audit Event',
+            target: l.target || 'Lead Record',
+            severity: (l.severity as any) || 'INFO',
+            ipAddress: l.ipAddress || '127.0.0.1',
+            location: 'India HQ',
+          }))
+          // Merge with initial logs, avoiding duplicate ids
+          setLogs(prev => {
+            const existingIds = new Set(formatted.map(f => f.id))
+            const rest = prev.filter(p => !existingIds.has(p.id))
+            return [...formatted, ...rest]
+          })
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to fetch live audit logs:', e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchLiveLogs()
+  }, [])
 
   const filteredLogs = useMemo(() => {
     return logs.filter(l => {
@@ -142,6 +180,14 @@ export function ActivityLogs() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={fetchLiveLogs}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition shadow-xs disabled:opacity-50"
+          >
+            <RefreshCw size={13} className={loading ? 'animate-spin text-amber-500' : 'text-slate-500'} />
+            <span>Refresh Trail</span>
+          </button>
           <button
             onClick={exportCSV}
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition shadow-xs"

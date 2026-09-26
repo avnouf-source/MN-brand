@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { generate2000Leads, generate8PerfumeAgents } from '@/lib/bulk-generator'
+import { AdminVoiceCopilot } from '@/components/admin/AdminVoiceCopilot'
 
 const AnalyticsDashboard = nextDynamic(
   () => import('@/components/admin/AnalyticsDashboard').then(m => m.AnalyticsDashboard),
@@ -72,5 +73,11 @@ export default async function DashboardPage() {
     totalMessages: messages,
   }
 
-  return <AnalyticsDashboard stats={stats} agents={users as any} leads={leads as any} />
+  return (
+    <>
+      <AnalyticsDashboard stats={stats} agents={users as any} leads={leads as any} />
+      <AdminVoiceCopilot />
+    </>
+  )
 }
+

@@ -80,3 +80,54 @@ self.addEventListener('fetch', (event) => {
     )
   }
 })
+
+// 4. Push Notifications (FCM / Web Push)
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'B Perfume CRM',
+    body: 'New lead batch assigned via Round-Robin distribution.',
+    icon: '/icons/icon-192.svg',
+    url: '/agent/workspace',
+  }
+  if (event.data) {
+    try {
+      const parsed = event.data.json()
+      data = { ...data, ...parsed }
+    } catch {
+      data.body = event.data.text()
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: data.icon,
+    badge: data.icon,
+    vibrate: [150, 80, 150],
+    data: {
+      url: data.url || '/agent/workspace',
+    },
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  )
+})
+
+// 5. Notification Click Handler: Focus or open workspace
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const targetUrl = event.notification.data?.url || '/agent/workspace'
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes('/agent/workspace') && 'focus' in client) {
+          return client.focus()
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl)
+      }
+    })
+  )
+})

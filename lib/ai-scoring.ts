@@ -196,3 +196,95 @@ export function calculatePredictiveScore(lead: {
     }
   }
 }
+
+export interface SmartReplySuggestion {
+  id: string
+  label: string
+  text: string
+  intent: 'PRICING' | 'NOTES' | 'SHIPPING' | 'SAMPLE' | 'FOLLOWUP'
+}
+
+/**
+ * Generates context-aware smart reply suggestions based on the last customer message
+ */
+export function generateSmartReplies(lead: any, customerMessage?: string): SmartReplySuggestion[] {
+  const msg = (customerMessage || '').toLowerCase()
+  const name = lead?.name?.split(' ')[0] || 'Valued Guest'
+  const pref = lead?.fragrancePreference || 'CITYMAN Extrait'
+
+  const suggestions: SmartReplySuggestion[] = []
+
+  if (msg.includes('price') || msg.includes('cost') || msg.includes('how much') || msg.includes('rate')) {
+    suggestions.push({
+      id: 'price-1',
+      label: '💰 Quote 50ml & 100ml',
+      text: `Dear ${name}, our ${pref} is ₹2,800 (50ml) and ₹4,200 (100ml Extrait de Parfum) with complimentary pan-India boutique delivery. May I reserve a flacon for you?`,
+      intent: 'PRICING',
+    })
+    suggestions.push({
+      id: 'price-2',
+      label: '🎁 VIP Gifting Offer',
+      text: `Dear ${name}, if you reserve 2 flacons today, we include complimentary miniature travel atomizers and luxury velvet packaging.`,
+      intent: 'DISCOUNT' as any,
+    })
+  } else if (msg.includes('strong') || msg.includes('hard') || msg.includes('last') || msg.includes('hours') || msg.includes('projection')) {
+    suggestions.push({
+      id: 'longevity-1',
+      label: '⚡ 12-Hour Longevity Guarantee',
+      text: `Hello ${name}! All B Perfume Extraits feature 35% pure perfume oils, guaranteeing 12+ hours of commanding sillage even in humid Indian weather.`,
+      intent: 'NOTES',
+    })
+    suggestions.push({
+      id: 'longevity-2',
+      label: '🌿 Scent Notes Breakdown',
+      text: `Dear ${name}, ${pref} opens with fresh spicy notes, evolving into rich tobacco and smoky agarwood. It is formulated specifically for all-day projection.`,
+      intent: 'NOTES',
+    })
+  } else if (msg.includes('delivery') || msg.includes('ship') || msg.includes('track') || msg.includes('when')) {
+    suggestions.push({
+      id: 'ship-1',
+      label: '📦 Express Dispatch Info',
+      text: `Hello ${name}, orders placed before 3 PM are dispatched same-day via BlueDart Express (2-3 business days delivery across all Indian metros).`,
+      intent: 'SHIPPING',
+    })
+  } else {
+    // Default smart contextual prompts
+    suggestions.push({
+      id: 'default-1',
+      label: `✨ Recommend ${pref}`,
+      text: `Hello ${name}! Thank you for contacting B Perfume. For your refined taste, ${pref} is our most sought-after creation. Would you like a fragrance breakdown?`,
+      intent: 'NOTES',
+    })
+    suggestions.push({
+      id: 'default-2',
+      label: '🧪 Discovery Sample Set',
+      text: `Dear ${name}, would you like us to dispatch our 5-Piece Haute Parfumerie Discovery Discovery Set to sample at home before choosing your signature flacon?`,
+      intent: 'SAMPLE',
+    })
+    suggestions.push({
+      id: 'default-3',
+      label: '📅 Follow-up Touchpoint',
+      text: `Hi ${name}, checking in to see if you have any questions regarding your fragrance selection. I am at your service!`,
+      intent: 'FOLLOWUP',
+    })
+  }
+
+  return suggestions
+}
+
+/**
+ * Analyzes chat sentiment and auto-scores lead tag as 'HOT', 'WARM', or 'COLD'
+ */
+export function calculateAutoTag(lead: any, messages: any[]): 'HOT' | 'WARM' | 'COLD' {
+  const sentiment = analyzeSentiment(messages)
+  const score = calculatePredictiveScore(lead)
+
+  if (score.score >= 70 || sentiment.sentiment === 'Enthusiastic' || lead.stage === 'ORDER_PLACED') {
+    return 'HOT'
+  } else if (score.score >= 40 || sentiment.sentiment === 'Interested') {
+    return 'WARM'
+  } else {
+    return 'COLD'
+  }
+}
+
