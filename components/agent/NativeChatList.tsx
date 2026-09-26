@@ -8,9 +8,16 @@ import {
   CheckCheck,
   MessageSquare,
   X,
+  Tag,
 } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useDebounce } from '@/lib/hooks/useDebounce'
+import {
+  SYSTEM_LEAD_LABELS,
+  SYSTEM_LABEL_KEYS,
+  LeadLabelType,
+  getLeadSystemLabel,
+} from '@/lib/labels'
 import type { Lead } from './AgentWorkspace'
 
 interface Props {
@@ -22,6 +29,7 @@ interface Props {
   archivedIds: string[]
   onToggleArchive: (leadId: string) => void
   onDeleteLead: (leadId: string) => void
+  onUpdateLeadLabel?: (leadId: string, label: LeadLabelType) => void
 }
 
 function formatChatTime(dateStr?: string | Date): string {
@@ -50,13 +58,14 @@ interface RowProps {
   onTogglePin: (leadId: string) => void
   onToggleArchive: (leadId: string) => void
   onDeleteLead: (leadId: string) => void
+  onUpdateLeadLabel?: (leadId: string, label: LeadLabelType) => void
   onTouchStart: (e: React.TouchEvent, leadId: string) => void
   onTouchMove: (e: React.TouchEvent, leadId: string) => void
   onTouchEnd: (leadId: string) => void
   resetSwipe: () => void
 }
 
-// Ultra-Luxury Monochromatic Chat Item Row (Chanel / Byredo Aesthetic)
+// Ultra-Luxury Monochromatic Chat Item Row with WhatsApp Business Labels
 const ChatItemRow = memo(function ChatItemRow({
   lead,
   isSelected,
@@ -68,6 +77,7 @@ const ChatItemRow = memo(function ChatItemRow({
   onTogglePin,
   onToggleArchive,
   onDeleteLead,
+  onUpdateLeadLabel,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -78,6 +88,8 @@ const ChatItemRow = memo(function ChatItemRow({
   const hasUnread = msgs.some(m => !m.isRead && m.direction === 'INBOUND')
   const lastTime = formatChatTime(lastMsg?.createdAt || lead.updatedAt)
   const currentOffset = isSwiped ? swipeOffset : 0
+
+  const systemLabel = getLeadSystemLabel(lead)
 
   return (
     <div
@@ -107,7 +119,7 @@ const ChatItemRow = memo(function ChatItemRow({
             onToggleArchive(lead.id)
             resetSwipe()
           }}
-          className="flex-1 bg-slate-700 text-white flex flex-col items-center justify-center text-[10px] font-medium tracking-wider uppercase"
+          className="flex-1 bg-slate-700 text-white flex flex-col items-center justify-center text-[10px] font-medium tracking-wider uppercase cursor-pointer"
         >
           <Archive size={14} />
           <span className="mt-0.5">Archive</span>
@@ -118,7 +130,7 @@ const ChatItemRow = memo(function ChatItemRow({
             onDeleteLead(lead.id)
             resetSwipe()
           }}
-          className="flex-1 bg-[#1E293B] text-slate-300 hover:text-white flex flex-col items-center justify-center text-[10px] font-medium tracking-wider uppercase"
+          className="flex-1 bg-[#1E293B] text-slate-300 hover:text-white flex flex-col items-center justify-center text-[10px] font-medium tracking-wider uppercase cursor-pointer"
         >
           <Trash2 size={14} />
           <span className="mt-0.5">Delete</span>
@@ -180,25 +192,35 @@ const ChatItemRow = memo(function ChatItemRow({
                   {lastMsg.body}
                 </>
               ) : (
-                <span className="text-slate-300 italic">No messages yet</span>
+                <span className="italic text-slate-400">No messages yet</span>
               )}
             </p>
 
-            {hasUnread && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0A0F1D] flex-shrink-0" />
-            )}
+            {/* WhatsApp Business Visual Label Pill */}
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wide flex-shrink-0"
+              style={{
+                color: systemLabel.color,
+                backgroundColor: systemLabel.bg,
+                border: `1px solid ${systemLabel.border}`,
+              }}
+              title={`Label: ${systemLabel.label} — ${systemLabel.description}`}
+            >
+              <span className="text-[10px] leading-none">{systemLabel.emoji}</span>
+              <span>{systemLabel.label}</span>
+            </span>
           </div>
         </div>
 
-        {/* Desktop Quick Actions (Subtle on hover) */}
-        <div className="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
+        {/* Desktop Quick Actions on Hover */}
+        <div className="hidden sm:flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
           <button
             type="button"
             onClick={e => {
               e.stopPropagation()
               onTogglePin(lead.id)
             }}
-            className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition"
+            className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition cursor-pointer"
             title={isPinned ? 'Unpin' : 'Pin'}
           >
             <Pin size={12} className={isPinned ? 'fill-[#0A0F1D] text-[#0A0F1D]' : ''} />
@@ -209,7 +231,7 @@ const ChatItemRow = memo(function ChatItemRow({
               e.stopPropagation()
               onToggleArchive(lead.id)
             }}
-            className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition"
+            className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition cursor-pointer"
             title="Archive"
           >
             <Archive size={12} />
@@ -229,8 +251,10 @@ export const NativeChatList = memo(function NativeChatList({
   archivedIds,
   onToggleArchive,
   onDeleteLead,
+  onUpdateLeadLabel,
 }: Props) {
   const [search, setSearch] = useState('')
+  const [selectedLabel, setSelectedLabel] = useState<LeadLabelType | 'ALL'>('ALL')
   const debouncedSearch = useDebounce(search, 300)
   const [swipedLeadId, setSwipedLeadId] = useState<string | null>(null)
   const [swipeOffset, setSwipeOffset] = useState<number>(0)
@@ -243,10 +267,32 @@ export const NativeChatList = memo(function NativeChatList({
     return leads.filter(l => !archivedIds.includes(l.id))
   }, [leads, archivedIds])
 
-  // Filter & Sort using debounced query
+  // Count leads per WhatsApp Business label
+  const labelCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      NEW_LEAD: 0,
+      FOLLOW_UP: 0,
+      IMPORTANT: 0,
+      CONVERTED: 0,
+      LOST: 0,
+    }
+    for (const l of activeLeads) {
+      const lbl = getLeadSystemLabel(l).id
+      if (counts[lbl] !== undefined) counts[lbl]++
+    }
+    return counts
+  }, [activeLeads])
+
+  // Filter & Sort using debounced query and active WhatsApp Business label
   const filteredLeads = useMemo(() => {
     let list = activeLeads
 
+    // Label Filter
+    if (selectedLabel !== 'ALL') {
+      list = list.filter(l => getLeadSystemLabel(l).id === selectedLabel)
+    }
+
+    // Search Filter
     if (debouncedSearch.trim()) {
       const q = debouncedSearch.toLowerCase().trim()
       list = list.filter(l =>
@@ -266,7 +312,7 @@ export const NativeChatList = memo(function NativeChatList({
       const bTime = new Date(b.updatedAt || b.conversation?.messages?.slice(-1)[0]?.createdAt || 0).getTime()
       return bTime - aTime
     })
-  }, [activeLeads, debouncedSearch, pinnedIds])
+  }, [activeLeads, selectedLabel, debouncedSearch, pinnedIds])
 
   // Native Swiping Touch Handlers
   const handleTouchStart = useCallback((e: React.TouchEvent, leadId: string) => {
@@ -323,8 +369,8 @@ export const NativeChatList = memo(function NativeChatList({
 
   return (
     <div className="flex flex-col h-full bg-white select-none">
-      {/* 2. THE SINGLE SIMPLE SEARCH BAR (Strict 3-Element Rule: Top Bar -> Search Bar -> Chat List) */}
-      <div className="px-3.5 py-2.5 border-b border-slate-100 flex-shrink-0 bg-white">
+      {/* 1. SIMPLE SEARCH BAR */}
+      <div className="px-3.5 pt-2.5 pb-2 border-b border-slate-100 flex-shrink-0 bg-white">
         <div className="relative">
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -337,7 +383,7 @@ export const NativeChatList = memo(function NativeChatList({
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-800"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-800 cursor-pointer"
             >
               <X size={13} />
             </button>
@@ -345,7 +391,68 @@ export const NativeChatList = memo(function NativeChatList({
         </div>
       </div>
 
-      {/* 3. THE CHAT LIST DIRECTLY BELOW IT (Virtualized & Monochromatic) */}
+      {/* 2. WHATSAPP BUSINESS-STYLE HORIZONTAL SCROLLABLE LABEL FILTER BAR */}
+      <div className="px-3 py-2 border-b border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth bg-white flex-shrink-0">
+        {/* All Leads Filter Chip */}
+        <button
+          type="button"
+          onClick={() => setSelectedLabel('ALL')}
+          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
+            selectedLabel === 'ALL'
+              ? 'bg-[#0A0F1D] text-white shadow-xs'
+              : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+          }`}
+        >
+          <span>All</span>
+          <span
+            className={`text-[9px] px-1.5 py-0.2 rounded-full font-mono ${
+              selectedLabel === 'ALL' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700'
+            }`}
+          >
+            {activeLeads.length}
+          </span>
+        </button>
+
+        {/* 5 Primary WhatsApp Business System Labels */}
+        {SYSTEM_LABEL_KEYS.map(key => {
+          const cfg = SYSTEM_LEAD_LABELS[key]
+          const isSelected = selectedLabel === key
+          const count = labelCounts[key] || 0
+
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSelectedLabel(key)}
+              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide whitespace-nowrap transition flex items-center gap-1.5 border cursor-pointer ${
+                isSelected
+                  ? 'shadow-xs ring-1 ring-offset-1'
+                  : 'hover:brightness-95'
+              }`}
+              style={{
+                color: isSelected ? '#FFFFFF' : cfg.color,
+                backgroundColor: isSelected ? cfg.dot : cfg.bg,
+                borderColor: cfg.border,
+                boxShadow: isSelected ? `0 2px 8px -1px ${cfg.dot}60` : undefined,
+              }}
+            >
+              <span className="text-[11px] leading-none">{cfg.emoji}</span>
+              <span>{cfg.label}</span>
+              <span
+                className="text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold"
+                style={{
+                  backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.06)',
+                  color: isSelected ? '#FFFFFF' : cfg.color,
+                }}
+              >
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* 3. VIRTUALIZED CHAT LIST */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto relative contain-strict"
@@ -353,7 +460,16 @@ export const NativeChatList = memo(function NativeChatList({
         {filteredLeads.length === 0 ? (
           <div className="p-12 text-center text-slate-400">
             <MessageSquare size={24} className="mx-auto mb-2 opacity-25" />
-            <p className="text-xs font-medium text-slate-400">No conversations found</p>
+            <p className="text-xs font-medium text-slate-400">No conversations in this view</p>
+            {selectedLabel !== 'ALL' && (
+              <button
+                type="button"
+                onClick={() => setSelectedLabel('ALL')}
+                className="mt-2 text-[11px] font-semibold text-[#0A0F1D] underline cursor-pointer"
+              >
+                View all conversations
+              </button>
+            )}
           </div>
         ) : (
           <div
@@ -393,6 +509,7 @@ export const NativeChatList = memo(function NativeChatList({
                     onTogglePin={onTogglePin}
                     onToggleArchive={onToggleArchive}
                     onDeleteLead={onDeleteLead}
+                    onUpdateLeadLabel={onUpdateLeadLabel}
                     onTouchStart={handleTouchStart}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={handleTouchEnd}

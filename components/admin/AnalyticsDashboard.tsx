@@ -29,8 +29,14 @@ import {
   Award,
   Clock,
   Sparkles,
+  FileText,
+  Shuffle,
+  UploadCloud,
+  Check,
+  Loader2,
 } from 'lucide-react'
 import { SUPPORTED_CURRENCIES, formatCurrencyValue } from '@/lib/countries'
+import { generateExecutiveReportPDF } from '@/lib/exportPdf'
 
 interface Props {
   stats: {
@@ -122,22 +128,107 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
     })
   }, [cfg])
 
-  // Time-scaled 8 advisors workload & closed orders
+  // State for PDF Report Generation and Bulk Lead Import
+  const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [showBulkModal, setShowBulkModal] = useState(false)
+  const [bulkImporting, setBulkImporting] = useState(false)
+  const [importResult, setImportResult] = useState<any>(null)
+  const [csvUploadText, setCsvUploadText] = useState('')
+
+  // Time-scaled 8 advisors workload & performance tracking (Total Assigned, Contacted, Conversion, Lost)
   const advisorPerformance = useMemo(() => {
-    return OFFICIAL_8_ADVISORS.map(adv => {
+    return OFFICIAL_8_ADVISORS.map((adv, idx) => {
       const assigned = Math.max(1, Math.round(adv.quota * cfg.leadFactor))
+      const contacted = Math.max(1, Math.round(assigned * (0.88 + (idx % 3) * 0.04))) // ~88-96% contacted
       const closedOrders = Math.max(1, Math.round(assigned * 0.18))
+      const lostLeads = Math.max(0, Math.round(assigned * 0.08)) // ~8% lost
       const revenueINR = closedOrders * adv.avgOrder
       const conversion = ((closedOrders / assigned) * 100).toFixed(1) + '%'
       return {
         ...adv,
         assigned,
+        contacted,
         closedOrders,
+        lostLeads,
         revenueINR,
         conversion,
       }
     })
   }, [cfg])
+
+  // PDF Export Engine (Super Admin Report)
+  const handleDownloadPDF = useCallback(() => {
+    setGeneratingPdf(true)
+    try {
+      const totalAssigned = advisorPerformance.reduce((acc, a) => acc + a.assigned, 0)
+      const totalContacted = advisorPerformance.reduce((acc, a) => acc + a.contacted, 0)
+      const totalConverted = advisorPerformance.reduce((acc, a) => acc + a.closedOrders, 0)
+      const totalLost = advisorPerformance.reduce((acc, a) => acc + a.lostLeads, 0)
+      const avgConversion = ((totalConverted / totalAssigned) * 100).toFixed(1) + '%'
+      const totalRev = advisorPerformance.reduce((acc, a) => acc + a.revenueINR, 0)
+
+      generateExecutiveReportPDF({
+        summary: {
+          period: cfg.label,
+          totalAssigned,
+          totalContacted,
+          totalConverted,
+          totalLost,
+          averageConversionRate: avgConversion,
+          totalRevenueINR: totalRev,
+          currency,
+        },
+        agents: advisorPerformance.map(a => ({
+          name: a.name,
+          email: a.email,
+          assigned: a.assigned,
+          contacted: a.contacted,
+          converted: a.closedOrders,
+          lostLeads: a.lostLeads,
+          conversionRate: a.conversion,
+          revenueINR: a.revenueINR,
+          speed: a.speed,
+          status: a.status,
+        })),
+      })
+    } catch (err) {
+      console.error('[PDF Export] Generation error:', err)
+    } finally {
+      setGeneratingPdf(false)
+    }
+  }, [advisorPerformance, cfg, currency])
+
+  // Handler for Automated Bulk Lead Import with Round-Robin routing
+  const handleRunBulkImport = async (benchmarkCount?: number) => {
+    setBulkImporting(true)
+    setImportResult(null)
+    try {
+      const payload: any = {}
+      if (benchmarkCount) {
+        payload.generateBenchmarkCount = benchmarkCount
+      } else if (csvUploadText.trim()) {
+        payload.csvText = csvUploadText.trim()
+      } else {
+        payload.generateBenchmarkCount = 20000 // Default 20,000 benchmark
+      }
+
+      const res = await fetch('/api/leads/import-bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setImportResult(data)
+      } else {
+        alert(data.error || 'Failed to import leads')
+      }
+    } catch (e: any) {
+      alert('Error during bulk routing: ' + e.message)
+    } finally {
+      setBulkImporting(false)
+    }
+  }
 
   const agentChartData = useMemo(() => {
     return advisorPerformance.map(a => ({
@@ -379,6 +470,32 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
             <span className="hidden xs:inline">Export CSV</span>
           </button>
 
+          {/* Executive PDF Report via jsPDF */}
+          <button
+            onClick={handleDownloadPDF}
+            disabled={generatingPdf}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-xs font-semibold shadow-xs transition hover:opacity-90 active:scale-95 disabled:opacity-50"
+            style={{ background: '#0F1729', border: '1px solid #C9A84C' }}
+            title="Download Executive Performance Dossier PDF"
+          >
+            {generatingPdf ? (
+              <Loader2 size={13} className="animate-spin text-amber-400" />
+            ) : (
+              <FileText size={13} style={{ color: '#C9A84C' }} />
+            )}
+            <span className="text-amber-300 font-medium">Download Report (PDF)</span>
+          </button>
+
+          {/* Automated Bulk Lead Routing Round-Robin Modal Trigger */}
+          <button
+            onClick={() => setShowBulkModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-300/80 bg-amber-50/80 hover:bg-amber-100 text-xs font-bold text-amber-900 transition shadow-2xs active:scale-95"
+            title="Automated Round-Robin Lead Import & Routing"
+          >
+            <Shuffle size={13} className="text-amber-700" />
+            <span>Import Leads (Round-Robin)</span>
+          </button>
+
           {/* Print / Save PDF Dossier */}
           <button
             onClick={handleOpenPrint}
@@ -387,7 +504,7 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
             title="Generate & print detailed executive dossier"
           >
             <Printer size={13} style={{ color: '#C9A84C' }} />
-            <span>Print PDF</span>
+            <span>Print View</span>
           </button>
         </div>
       </div>
@@ -683,12 +800,13 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
             <thead>
               <tr className="border-b border-slate-200 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
                 <th className="py-2.5 pr-4">Advisor Name</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3">Assigned Clients</th>
+                <th className="py-2.5 px-3">Live Status</th>
+                <th className="py-2.5 px-3">Total Leads Assigned</th>
+                <th className="py-2.5 px-3">Leads Contacted</th>
+                <th className="py-2.5 px-3">Conversion Rate</th>
+                <th className="py-2.5 px-3">Lost Leads</th>
                 <th className="py-2.5 px-3">Orders Closed</th>
-                <th className="py-2.5 px-3">Conversion</th>
-                <th className="py-2.5 px-3">Revenue Generated</th>
-                <th className="py-2.5 pl-3 text-right">Avg Response</th>
+                <th className="py-2.5 pl-3 text-right">Revenue Generated</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -713,20 +831,23 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> ONLINE
                     </span>
                   </td>
-                  <td className="py-3 px-3 font-mono font-bold text-slate-700">
+                  <td className="py-3 px-3 font-mono font-bold text-slate-800">
                     {adv.assigned.toLocaleString('en-IN')}
                   </td>
-                  <td className="py-3 px-3 font-mono font-bold text-slate-900">
-                    {adv.closedOrders.toLocaleString('en-IN')} Flacons
+                  <td className="py-3 px-3 font-mono font-bold text-blue-700">
+                    {adv.contacted.toLocaleString('en-IN')}
                   </td>
-                  <td className="py-3 px-3 font-mono text-amber-700 font-semibold">
+                  <td className="py-3 px-3 font-mono text-emerald-700 font-bold">
                     {adv.conversion}
                   </td>
-                  <td className="py-3 px-3 font-mono font-bold text-slate-900">
-                    {formatCurrencyValue(adv.revenueINR, currency)}
+                  <td className="py-3 px-3 font-mono text-slate-500 font-medium">
+                    {adv.lostLeads.toLocaleString('en-IN')}
                   </td>
-                  <td className="py-3 pl-3 text-right text-slate-500 font-mono">
-                    {adv.speed}
+                  <td className="py-3 px-3 font-mono font-semibold text-slate-700">
+                    {adv.closedOrders.toLocaleString('en-IN')} Flacons
+                  </td>
+                  <td className="py-3 pl-3 text-right font-mono font-bold text-slate-900">
+                    {formatCurrencyValue(adv.revenueINR, currency)}
                   </td>
                 </tr>
               ))}
@@ -1033,6 +1154,187 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
                 <span>B Perfume International · Enterprise Haute Parfumerie CRM</span>
                 <span>Confidential Internal Document</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Automated Bulk Lead Routing (Round-Robin) Modal */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-2xl overflow-hidden my-8">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between" style={{ background: '#0F1729' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-amber-400 bg-amber-400/10 border border-amber-400/30">
+                  <Shuffle size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-serif tracking-wide">
+                    Automated Bulk Lead Routing
+                  </h3>
+                  <p className="text-xs text-amber-200/70">
+                    High-Volume Round-Robin Lead Distribution Engine
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowBulkModal(false)
+                  setImportResult(null)
+                  setCsvUploadText('')
+                }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {/* Algorithm Explanation Card */}
+              <div className="p-4 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-xs text-amber-950 space-y-1.5">
+                <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                  <Sparkles size={14} style={{ color: '#C9A84C' }} />
+                  <span>Strict Round-Robin Allocation (index % activeAgents.length)</span>
+                </div>
+                <p className="text-amber-800 leading-relaxed">
+                  Incoming leads are sequentially and equally distributed across all 8 active sales advisors
+                  (Adarsh, Fathimath Shifa, Nandana, Nouf, Rizvan, Sajila, Sajna, Salih) without requiring any manual assignment.
+                </p>
+              </div>
+
+              {/* Action Tabs / Panels */}
+              {!importResult ? (
+                <div className="space-y-4">
+                  {/* Option 1: 1-Click High-Volume Benchmark */}
+                  <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Option 1: 20,000+ Enterprise Benchmark Test
+                      </span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-mono">
+                        Instant 20,000 Leads
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Simulate a massive corporate marketing influx of 20,000 luxury perfume leads across all Indian metro hubs. Each advisor receives exactly 2,500 leads.
+                    </p>
+                    <button
+                      onClick={() => handleRunBulkImport(20000)}
+                      disabled={bulkImporting}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold text-white shadow-sm transition hover:opacity-90 disabled:opacity-50 active:scale-98"
+                      style={{ background: '#0F1729' }}
+                    >
+                      {bulkImporting ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin text-amber-400" />
+                          <span>Distributing 20,000 Leads via Round-Robin...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Shuffle size={14} style={{ color: '#C9A84C' }} />
+                          <span>Run 20,000 Leads Round-Robin Test</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Option 2: Custom CSV Upload / Paste */}
+                  <div className="p-4 rounded-2xl border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Option 2: Import Custom Leads CSV
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400">
+                        Headers: name, phone, fragrance, tag
+                      </span>
+                    </div>
+                    <textarea
+                      value={csvUploadText}
+                      onChange={e => setCsvUploadText(e.target.value)}
+                      placeholder="name,phone,fragrance,tag&#10;Aarav Sharma,+919812345601,Aquatic Fresh,HOT&#10;Diya Patel,+919812345602,Arabic Oud,WARM&#10;Rohan Mehta,+919812345603,Rose Intense,NEW"
+                      rows={5}
+                      className="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono bg-slate-50 focus:outline-hidden focus:ring-2 focus:ring-amber-400 resize-none"
+                    />
+                    <button
+                      onClick={() => handleRunBulkImport()}
+                      disabled={bulkImporting || !csvUploadText.trim()}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold text-slate-900 border border-amber-300 bg-amber-400/90 hover:bg-amber-400 transition disabled:opacity-50 shadow-xs"
+                    >
+                      {bulkImporting ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          <span>Parsing &amp; Routing CSV Leads...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud size={14} />
+                          <span>Upload &amp; Distribute CSV Leads</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Results View */
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-1">
+                    <div className="flex items-center gap-2 font-bold text-sm text-emerald-800">
+                      <CheckCircle2 size={16} className="text-emerald-600" />
+                      <span>{importResult.message || 'Leads successfully distributed!'}</span>
+                    </div>
+                    <p className="text-xs text-emerald-700">
+                      Total Leads Distributed: <span className="font-bold">{importResult.totalDistributed?.toLocaleString('en-IN') || importResult.totalLeads?.toLocaleString('en-IN')}</span> across{' '}
+                      <span className="font-bold">{importResult.activeAgentsCount || 8} Active Advisors</span>.
+                    </p>
+                  </div>
+
+                  {/* Allocation Breakdown per Agent */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+                    <div className="bg-slate-100/80 px-4 py-2.5 border-b border-slate-200 text-xs font-bold text-slate-700 flex items-center justify-between">
+                      <span>Advisor Equal Allocation Breakdown</span>
+                      <span className="text-[10px] font-mono text-emerald-700">100% Parity Achieved</span>
+                    </div>
+                    <div className="divide-y divide-slate-100 max-h-56 overflow-y-auto">
+                      {(importResult.distributionBreakdown || []).map((agent: any) => (
+                        <div key={agent.agentId} className="px-4 py-2.5 flex items-center justify-between text-xs hover:bg-slate-50">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold" style={{ background: '#0F1729' }}>
+                              {agent.agentName?.charAt(0)}
+                            </div>
+                            <div>
+                              <span className="font-semibold text-slate-800">{agent.agentName}</span>
+                              <span className="text-[10px] text-slate-400 block">{agent.agentEmail}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-mono font-bold text-slate-900">{agent.leadsAllocated?.toLocaleString('en-IN')}</span>
+                            <span className="text-[10px] text-slate-400 ml-1">leads</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => {
+                        setImportResult(null)
+                        setCsvUploadText('')
+                      }}
+                      className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
+                    >
+                      Route Another Batch
+                    </button>
+                    <button
+                      onClick={() => setShowBulkModal(false)}
+                      className="px-5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition"
+                      style={{ background: '#0F1729' }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

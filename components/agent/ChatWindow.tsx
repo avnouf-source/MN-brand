@@ -26,12 +26,19 @@ import { OFFICIAL_PERFUME_CATALOG, PerfumeProduct, findPerfumeByText } from '@/l
 import type { Lead, Message, QuickReply } from './AgentWorkspace'
 import { formatPhoneDisplay, parsePhone, waLink, telLink, getCountryLocalTime } from '@/lib/countries'
 import { analyzeSentiment, calculatePredictiveScore } from '@/lib/ai-scoring'
+import {
+  SYSTEM_LEAD_LABELS,
+  SYSTEM_LABEL_KEYS,
+  LeadLabelType,
+  getLeadSystemLabel,
+} from '@/lib/labels'
 
 interface Props {
   lead: Lead
   quickReplies: QuickReply[]
   onNewMessage: (leadId: string, msg: Message) => void
   onBack?: () => void
+  onUpdateLeadLabel?: (leadId: string, label: LeadLabelType) => void
 }
 
 function fmtTime(d: string) {
@@ -75,6 +82,7 @@ export const ChatWindow = memo(function ChatWindow({
   quickReplies,
   onNewMessage,
   onBack,
+  onUpdateLeadLabel,
 }: Props) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -508,6 +516,45 @@ export const ChatWindow = memo(function ChatWindow({
                       {currentStageName}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* WhatsApp Business Lead Labeling */}
+              <div className="space-y-2 pt-1">
+                <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  WhatsApp Business Label
+                </h5>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {SYSTEM_LABEL_KEYS.map(key => {
+                    const cfg = SYSTEM_LEAD_LABELS[key]
+                    const currentLabel = getLeadSystemLabel(lead)
+                    const isSelected = currentLabel.id === key
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => onUpdateLeadLabel && onUpdateLeadLabel(lead.id, key)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-medium transition cursor-pointer ${
+                          isSelected ? 'shadow-xs ring-1 ring-offset-1' : 'hover:bg-slate-50'
+                        }`}
+                        style={{
+                          backgroundColor: isSelected ? cfg.bg : '#FFFFFF',
+                          borderColor: isSelected ? cfg.dot : '#E2E8F0',
+                          color: isSelected ? cfg.color : '#334155',
+                        }}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm">{cfg.emoji}</span>
+                          <span className="font-semibold">{cfg.label}</span>
+                        </span>
+                        {isSelected && (
+                          <span className="text-[10px] uppercase font-bold tracking-wider" style={{ color: cfg.dot }}>
+                            Active
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 

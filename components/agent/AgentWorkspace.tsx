@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { ChatWindow } from './ChatWindow'
 import { NativeChatList } from './NativeChatList'
+import { LeadLabelType } from '@/lib/labels'
 
 const LeadCaptureModal = dynamic(
   () => import('./LeadCaptureModal').then(m => m.LeadCaptureModal),
@@ -31,6 +32,7 @@ export interface Lead {
   leadSource?: string
   stage: string
   tag: string
+  label?: LeadLabelType | string
   conversationStatus?: string
   assignedAgentId?: string
   assignedAgent?: { id: string; name: string }
@@ -172,6 +174,21 @@ export function AgentWorkspace({
     setSelected(prev => (prev?.id === leadId ? null : prev))
   }, [])
 
+  const onUpdateLeadLabel = useCallback(async (leadId: string, label: LeadLabelType) => {
+    setLeads(prev => prev.map(l => (l.id === leadId ? { ...l, label } : l)))
+    setSelected(prev => (prev?.id === leadId ? { ...prev, label } : prev))
+
+    try {
+      await fetch(`/api/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label }),
+      })
+    } catch (err) {
+      console.warn('[Workspace] Could not persist label update to server:', err)
+    }
+  }, [])
+
   return (
     <div className="flex flex-1 h-full bg-white overflow-hidden">
       {/* 
@@ -197,6 +214,7 @@ export function AgentWorkspace({
           archivedIds={archivedIds}
           onToggleArchive={onToggleArchive}
           onDeleteLead={onDeleteLead}
+          onUpdateLeadLabel={onUpdateLeadLabel}
         />
       </div>
 
@@ -212,6 +230,7 @@ export function AgentWorkspace({
             quickReplies={quickReplies}
             onNewMessage={onNewMessage}
             onBack={() => setMobile('leads')}
+            onUpdateLeadLabel={onUpdateLeadLabel}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-white">

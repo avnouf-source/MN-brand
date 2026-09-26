@@ -1,4 +1,7 @@
 import nextDynamic from 'next/dynamic'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { generate2000Leads, generate8PerfumeAgents } from '@/lib/bulk-generator'
 
@@ -9,7 +12,7 @@ const AnalyticsDashboard = nextDynamic(
       <div className="flex items-center justify-center p-16 text-slate-400">
         <div className="text-center space-y-2">
           <div className="w-8 h-8 rounded-full border-2 border-slate-300 border-t-amber-500 animate-spin mx-auto" />
-          <p className="text-xs font-medium">Loading Executive Analytics...</p>
+          <p className="text-xs font-medium">Loading Super Admin Executive Analytics...</p>
         </div>
       </div>
     ),
@@ -19,6 +22,21 @@ const AnalyticsDashboard = nextDynamic(
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    redirect('/login')
+  }
+
+  const userEmail = session.user?.email?.toLowerCase()
+  const userRole = (session.user as any)?.role
+
+  // Requirement 4: Restricted analytics dashboard accessible strictly to the 'Super Admin'
+  const isSuperAdmin = userRole === 'ADMIN' || userEmail === 'admin@bperfume.com'
+  if (!isSuperAdmin) {
+    // Sub-admins route to Team, Agents route to Clean Chat Window
+    redirect(userRole === 'SUB_ADMIN' ? '/admin/team' : '/agent/workspace')
+  }
+
   let leads: any[] = []
   let users: any[] = []
   let messages = 0
@@ -26,7 +44,7 @@ export default async function DashboardPage() {
   try {
     const res = await Promise.all([
       prisma.lead.findMany({ include: { assignedAgent: { select: { name: true } } } }),
-      prisma.user.findMany({ where: { role: 'AGENT' }, select: { id: true, name: true, status: true, _count: { select: { assignedLeads: true } } } }),
+      prisma.user.findMany({ where: { role: 'AGENT' }, select: { id: true, name: true, email: true, status: true, _count: { select: { assignedLeads: true } } } }),
       prisma.message.count(),
     ])
     leads = res[0]
@@ -49,7 +67,7 @@ export default async function DashboardPage() {
     totalLeads: leads.length,
     hotLeads: leads.filter(l => l.tag === 'HOT').length,
     openConvs: leads.filter(l => l.conversationStatus === 'OPEN' || !l.conversationStatus).length,
-    orders: leads.filter(l => l.stage === 'ORDER_PLACED').length,
+    orders: leads.filter(l => l.stage === 'ORDER_PLACED' || l.stage === 'CONVERTED' || l.label === 'CONVERTED').length,
     closed: leads.filter(l => l.stage === 'DONE').length,
     totalMessages: messages,
   }

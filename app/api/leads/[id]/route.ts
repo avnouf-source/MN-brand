@@ -10,12 +10,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { id } = await params
   const body = await req.json()
-  const { stage, tag, assignedAgentId, conversationStatus } = body
+  const { stage, tag, label, assignedAgentId, conversationStatus } = body
   const updated = await prisma.lead.update({
     where: { id },
     data: {
       ...(stage && { stage }),
       ...(tag && { tag }),
+      ...(label && { label }),
       ...(assignedAgentId !== undefined && { assignedAgentId }),
       ...(conversationStatus && { conversationStatus }),
     },
