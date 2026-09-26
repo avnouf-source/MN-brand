@@ -4,10 +4,10 @@ import { authOptions } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
-// ElevenLabs Female Voice Profiles
+// ElevenLabs Multilingual Voice Profiles (optimized for Indian languages like Malayalam)
+// 'Lily' (Warm, articulate multilingual Indian/Asian female) id: pFZP5JQG7iQjIQuC4Bku
 // 'Rachel' (Calm, Professional Female) id: 21m00Tcm4TlvDq8ikWAM
-// 'Bella' (Warm, Elegant Luxury Voice) id: EXAVITQu4vr4xnSDxMaL
-const DEFAULT_FEMALE_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || '21m00Tcm4TlvDq8ikWAM'
+const DEFAULT_FEMALE_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'pFZP5JQG7iQjIQuC4Bku'
 
 export async function POST(req: NextRequest) {
   try {

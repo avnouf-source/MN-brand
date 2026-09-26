@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
             {
               role: 'system',
               content:
-                'You are the Executive AI Fragrance Intelligence Copilot for B Perfume Haute Parfumerie, assisting the Super Admin (Nouf). You analyze CRM metrics across 5,000 Indian leads, 8 dedicated luxury sales advisors (Adarsh, Fathimath Shifa, Nandana, Nouf, Rizvan, Sajila, Sajna, Salih), CITYMAN Extrait sales, and provide concise, executive-grade answers.',
+                'You are the Executive AI Copilot for B Perfume. Speak strictly in natural, conversational Malayalam script (not English or Manglish). Do not use highly formal, robotic translations. Speak casually and respectfully like a real human Malayali assistant talking to Super Admin Nouf. Analyze our CRM data across 5,000 Indian leads, 8 dedicated luxury sales advisors (Adarsh, Fathimath Shifa, Nandana, Nouf, Rizvan, Sajila, Sajna, Salih), and CITYMAN Extrait flacon orders, and provide clear, respectful, executive-grade answers in natural Malayalam.',
             },
             { role: 'user', content: prompt },
           ],
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         if (gptAnswer) {
           return NextResponse.json({
             answer: gptAnswer,
-            model: 'GPT-4o (Live OpenAI)',
+            model: 'GPT-4o (Live OpenAI - Malayalam)',
             timestamp: new Date().toISOString(),
           })
         }
@@ -79,52 +79,79 @@ export async function POST(req: NextRequest) {
   const deliveredRevenue = (stageCounts.SHIPPED + stageCounts.DELIVERED) * flaconPriceUSD
   const conversionRate = (((stageCounts.SHIPPED + stageCounts.DELIVERED) / totalLeads) * 100).toFixed(1)
 
-  // Generate intelligent contextual response
+  // Generate intelligent contextual response in natural, conversational Malayalam
   let answer = ''
 
-  if (action === 'forecast' || prompt.toLowerCase().includes('revenue') || prompt.toLowerCase().includes('forecast')) {
-    answer = `### 💎 B Perfume Executive Revenue & Flacon Sales Forecast
+  const lowerPrompt = prompt.toLowerCase()
+  if (
+    action === 'forecast' ||
+    lowerPrompt.includes('revenue') ||
+    lowerPrompt.includes('forecast') ||
+    lowerPrompt.includes('വരുമാനം') ||
+    lowerPrompt.includes('പ്രവചനം')
+  ) {
+    answer = `### 💎 ബി പെർഫ്യൂം വരുമാനവും സെയിൽസ് പ്രവചനവും
 
-**Key Fragrance Metrics Analyzed:**
-- **In-Flight Orders & Curation Pipeline:** \$${totalPipelineValue.toLocaleString()} USD (${stageCounts.SCENT_RECOMMENDATION + stageCounts.ORDER_PLACED} flacon inquiries)
-- **Delivered & In-Transit Revenue:** \$${deliveredRevenue.toLocaleString()} USD (${stageCounts.SHIPPED + stageCounts.DELIVERED} bottles fulfilled)
-- **Top Best-Seller:** **CITYMAN Extrait de Parfum** (accounting for 46% of total revenue)
-- **Average Order Value (AOV):** \$${flaconPriceUSD} USD per bottle
+നമസ്കാരം സൂപ്പർ അഡ്മിൻ നൗഫ്, ഇതാ നമ്മുടെ സെയിൽസ് പ്രവചന വിവരങ്ങൾ:
 
-**Strategic Recommendations for Nouf (Super Admin):**
-1. **Accelerate Scent Recommendations:** 1,680 Indian clients are currently exploring notes. Automated WhatsApp sample kit reminders could convert \$${Math.round(stageCounts.SCENT_RECOMMENDATION * 0.35 * flaconPriceUSD).toLocaleString()} in the next 14 days.
-2. **Indian Market Penetration:** Mumbai and Delhi NCR exhibit the highest demand for the signature **12-Hour Long-Lasting** Extrait formulation.`
-  } else if (action === 'agents' || prompt.toLowerCase().includes('agent') || prompt.toLowerCase().includes('staff') || prompt.toLowerCase().includes('team')) {
-    answer = `### 👥 8 B Perfume Luxury Sales Advisors Audit
+- **പൈപ്പ്‌ലൈനിലുള്ള ഓർഡറുകൾ:** $${totalPipelineValue.toLocaleString()} USD (${stageCounts.SCENT_RECOMMENDATION + stageCounts.ORDER_PLACED} അന്വേഷണങ്ങൾ)
+- **ഡെലിവറി ചെയ്തവ & ട്രാൻസിറ്റിലുള്ള വരുമാനം:** $${deliveredRevenue.toLocaleString()} USD (${stageCounts.SHIPPED + stageCounts.DELIVERED} ബോട്ടിലുകൾ പൂർത്തിയായി)
+- **ഏറ്റവും കൂടുതൽ വിറ്റുപോകുന്നത്:** **CITYMAN Extrait de Parfum** (മൊത്തം വരുമാനത്തിന്റെ 46%)
+- **ശരാശരി ഓർഡർ മൂല്യം (AOV):** $${flaconPriceUSD} USD
 
-**Workload Distribution Overview:**
-- **Total Advisors:** Exactly 8 Dedicated Scent Consultants across Women's, Men's, and Bespoke Collections.
-- **Lead Allocation:** Perfectly balanced at **625 Indian Leads per Advisor** (5,000 total portfolio).
-- **Executive Hierarchy:** 1 Super Admin (Nouf) with 2 Sub-Admins (Operations & VIP Experience).
-- **Staff Status:** 6 Active Online (75%) | 2 Offline (25%).
+**ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ:**
+1. **സെന്റ് റെക്കമൻഡേഷൻ വേഗത്തിലാക്കുക:** 1,680 ഇന്ത്യൻ കസ്റ്റമർമാർ ഇപ്പോൾ ഫ്രാഗ്രൻസ് നോട്ട്സ് തിരഞ്ഞെടുക്കുകയാണ്. ഓട്ടോമേറ്റഡ് വാട്സ്ആപ്പ് സാമ്പിൾ കിറ്റ് മെസ്സേജുകൾ അയച്ചാൽ അടുത്ത 14 ദിവസത്തിനുള്ളിൽ വരുമാനം ഇനിയും ഉയർത്താം.
+2. **ഇന്ത്യൻ മാർക്കറ്റ്:** മുംബൈ, ഡൽഹി എൻസിആർ, കേരളം എന്നിവിടങ്ങളിൽ 12-മണിക്കൂർ നീണ്ടുനിൽക്കുന്ന എക്‌സ്‌ട്രെയിറ്റ് പെർഫ്യൂമുകൾക്ക് വലിയ ഡിമാൻഡാണ്.`
+  } else if (
+    action === 'agents' ||
+    lowerPrompt.includes('agent') ||
+    lowerPrompt.includes('staff') ||
+    lowerPrompt.includes('team') ||
+    lowerPrompt.includes('അഡ്വൈസർ') ||
+    lowerPrompt.includes('ടീം')
+  ) {
+    answer = `### 👥 8 ലക്ഷ്വറി സെയിൽസ് അഡ്വൈസർമാരുടെ വിശകലനം
 
-**Top Performing Advisors:**
-1. **Karim Mansour (Signature Scents):** Highest volume on CITYMAN Extrait de Parfum orders.
-2. **Sara Al-Hashimi (Women's Haute Curation):** 98.2% SLA response rate on Velvet Rose inquiries.`
-  } else if (action === 'risk' || prompt.toLowerCase().includes('risk') || prompt.toLowerCase().includes('dormant') || prompt.toLowerCase().includes('inactive')) {
-    answer = `### 🚨 VIP Scent Consultation At-Risk Audit
+നൗഫ്, നമ്മുടെ സെയിൽസ് ടീമിന്റെ ഇപ്പോഴത്തെ അവസ്ഥ ഇതാ:
 
-**Risk Evaluation Summary:**
-- **Dormant Clients:** 112 inquiries awaiting note advice for > 24 hours.
-- **High-Value Impact:** 34 carries the \`HOT\` tag with estimated pipeline exposure of \$${(34 * flaconPriceUSD * 2).toLocaleString()} USD.
+- **ആകെ അഡ്വൈസർമാർ:** കൃത്യമായി 8 പേർ (ആദർശ്, ഫാത്തിമത്ത് ഷിഫ, നന്ദന, നൗഫ്, റിസ്‌വാൻ, സജില, സജ്‌ന, സ്വാലിഹ്).
+- **ലീഡ് വിഭജനം:** ഒരാൾക്ക് തുല്യമായി **625 ലീഡുകൾ** വീതം (ആകെ 5,000 പോർട്ട്‌ഫോളിയോ).
+- **അഡ്മിൻ തലപ്പത്ത്:** സൂപ്പർ അഡ്മിൻ നൗഫും 2 സബ്-അഡ്മിൻമാരും.
+- **നിലവിലെ സ്റ്റാറ്റസ്:** 6 പേർ ഓൺലൈൻ (75%) | 2 പേർ ഓഫ്ലൈൻ (25%).
 
-**Remediation Protocol:**
-1. Send automated WhatsApp olfactory guide featuring our 12-hour long-lasting formulations.
-2. Re-route unanswered Indian inquiries to available online advisors immediately.`
+**മുൻനിരയിലുള്ളവർ:**
+1. **റിസ്‌വാൻ / ആദർശ്:** CITYMAN Extrait de Parfum ഓർഡറുകൾ വേഗത്തിൽ ക്ലോസ് ചെയ്യുന്നതിൽ മുന്നിൽ.
+2. **ഫാത്തിമത്ത് ഷിഫ:** വുമൺസ് കളക്ഷൻ അന്വേഷണങ്ങൾക്ക് 98.2% വേഗത്തിലുള്ള പ്രതികരണം നൽകുന്നു.`
+  } else if (
+    action === 'risk' ||
+    lowerPrompt.includes('risk') ||
+    lowerPrompt.includes('dormant') ||
+    lowerPrompt.includes('inactive') ||
+    lowerPrompt.includes('ശ്രദ്ധിക്കേണ്ട') ||
+    lowerPrompt.includes('റിസ്ക്')
+  ) {
+    answer = `### 🚨 ശ്രദ്ധിക്കേണ്ട വിഐപി ക്ലയന്റുകളുടെ വിവരങ്ങൾ
+
+സൂപ്പർ അഡ്മിൻ നൗഫ്, അടിയന്തര ശ്രദ്ധ ആവശ്യമുള്ള കാര്യങ്ങൾ:
+
+- **മറുപടി ലഭിക്കാത്തവർ:** 24 മണിക്കൂറിലധികം നോട്ട്സ് സെലക്ഷനായി കാത്തിരിക്കുന്ന 112 കസ്റ്റമർമാർ.
+- **പ്രത്യേക ശ്രദ്ധ വേണ്ടവർ:** \`HOT\` ടാഗുള്ള 34 ക്ലയന്റുകൾ. ഇതിലൂടെ നഷ്ടപ്പെടാൻ സാധ്യതയുള്ള തുക ഏകദേശം $${(34 * flaconPriceUSD * 2).toLocaleString()} USD ആണ്.
+
+**ഉടൻ ചെയ്യേണ്ട കാര്യങ്ങൾ:**
+1. 12 മണിക്കൂർ നീണ്ടുനിൽക്കുന്ന സുഗന്ധങ്ങളെക്കുറിച്ചുള്ള വാട്സ്ആപ്പ് സന്ദേശം ഉടൻ അയക്കുക.
+2. പ്രതികരിക്കാത്ത ഇന്ത്യൻ അന്വേഷണങ്ങൾ ഇപ്പോൾ ഓൺലൈനിലുള്ള അഡ്വൈസർമാർക്ക് കൈമാറുക.`
   } else {
-    answer = `### ⚜️ B Perfume Haute Parfumerie Executive Intelligence
+    answer = `### ⚜️ ബി പെർഫ്യൂം എക്സിക്യൂട്ടീവ് സമ്മറി
 
-**Current Portfolio Overview:**
-- **Total Indian Client Base:** ${totalLeads.toLocaleString()} Leads (+91 Mobile Verified)
-- **Active Fragrance Consultations:** ${stageCounts.SCENT_RECOMMENDATION} Clients
-- **Confirmed Flacon Orders:** ${stageCounts.ORDER_PLACED} Bottles
-- **Fulfilled / In Transit:** ${stageCounts.SHIPPED + stageCounts.DELIVERED} Bottles (${conversionRate}% Conversion Rate)
-- **Flagship Formulation:** 12-Hour Long-Lasting Extrait de Parfum (CITYMAN, Oud Royale, Velvet Rose)`
+നമസ്കാരം സൂപ്പർ അഡ്മിൻ നൗഫ്. നമ്മുടെ ബി പെർഫ്യൂം സിആർഎമ്മിലെ പ്രധാന വിവരങ്ങൾ താഴെ നൽകുന്നു:
+
+- **ആകെ ഇന്ത്യൻ ക്ലയന്റുകൾ:** ${totalLeads.toLocaleString()} ലീഡുകൾ (+91 വെരിഫൈഡ്)
+- **ആക്ടീവ് ഫ്രാഗ്രൻസ് കൺസൾട്ടേഷൻ:** ${stageCounts.SCENT_RECOMMENDATION} പേർ
+- **സ്ഥിരീകരിച്ച ഓർഡറുകൾ:** ${stageCounts.ORDER_PLACED} ബോട്ടിലുകൾ
+- **ഡെലിവറി ചെയ്തവ:** ${stageCounts.SHIPPED + stageCounts.DELIVERED} ബോട്ടിലുകൾ (${conversionRate}% കൺവേർഷൻ നിരക്ക്)
+- **ജനപ്രിയ പെർഫ്യൂമുകൾ:** CITYMAN, ഔദ് റോയൽ, വെൽവെറ്റ് റോസ് (12-Hour Long-Lasting)
+
+നമ്മുടെ 5,000 ലീഡുകളെക്കുറിച്ചോ 8 അഡ്വൈസർമാരെക്കുറിച്ചോ ഉള്ള എന്തൊരു കാര്യവും നിങ്ങൾക്ക് എന്നോട് മലയാളത്തിൽ ചോദിക്കാവുന്നതാണ്.`
   }
 
   return NextResponse.json({

@@ -16,7 +16,7 @@ export function AdminVoiceCopilot() {
       id: 'welcome',
       role: 'copilot',
       content:
-        'Good day, Super Admin Nouf. I am your B Perfume Executive Voice Copilot. You may speak to me or type to query live CRM sales performance across our 5,000 Indian leads and 8 advisors.',
+        'നമസ്കാരം സൂപ്പർ അഡ്മിൻ നൗഫ്. ഞാൻ നിങ്ങളുടെ ബി പെർഫ്യൂം എക്സിക്യൂട്ടീവ് വോയിസ് അസിസ്റ്റന്റ് ആണ്. 5,000 ലീഡുകളെക്കുറിച്ചും സെയിൽസിനെക്കുറിച്ചും നിങ്ങൾക്ക് എന്നോട് മലയാളത്തിൽ ചോദിക്കാവുന്നതാണ്.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ])
@@ -34,7 +34,7 @@ export function AdminVoiceCopilot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isSpeaking])
 
-  // Setup Web Speech Recognition (Speech-to-Text)
+  // Setup Web Speech Recognition (Speech-to-Text) in native Malayalam (ml-IN)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
@@ -43,7 +43,7 @@ export function AdminVoiceCopilot() {
         const recognition = new SpeechRecognition()
         recognition.continuous = false
         recognition.interimResults = false
-        recognition.lang = 'en-US'
+        recognition.lang = 'ml-IN'
 
         recognition.onstart = () => {
           setIsListening(true)
@@ -163,14 +163,29 @@ export function AdminVoiceCopilot() {
     utterance.rate = 0.95
     utterance.pitch = 1.1 // Slightly higher pitch for smooth female timbre
 
-    // Attempt to pick a natural female voice
+    // Attempt to pick a natural Malayalam or Indian female voice
     const voices = window.speechSynthesis.getVoices()
-    const femaleVoice =
-      voices.find(v => (v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Google UK English Female') || v.name.includes('Zira') || v.name.includes('Karen')) && v.lang.startsWith('en')) ||
+    const mlVoice =
+      voices.find(v => v.lang === 'ml-IN' || v.lang.startsWith('ml')) ||
+      voices.find(
+        v =>
+          (v.lang.includes('IN') || v.lang.startsWith('hi')) &&
+          (v.name.includes('Female') || v.name.includes('India') || v.name.includes('Aditi'))
+      ) ||
+      voices.find(
+        v =>
+          (v.name.includes('Female') ||
+            v.name.includes('Samantha') ||
+            v.name.includes('Victoria') ||
+            v.name.includes('Google UK English Female') ||
+            v.name.includes('Zira') ||
+            v.name.includes('Karen')) &&
+          v.lang.startsWith('en')
+      ) ||
       voices.find(v => v.lang.startsWith('en'))
 
-    if (femaleVoice) {
-      utterance.voice = femaleVoice
+    if (mlVoice) {
+      utterance.voice = mlVoice
     }
 
     utterance.onend = () => setIsSpeaking(false)
@@ -203,7 +218,9 @@ export function AdminVoiceCopilot() {
 
       if (res.ok) {
         const data = await res.json()
-        const aiAnswer = data.answer || 'Analysis complete for your luxury CRM inquiry.'
+        const aiAnswer =
+          data.answer ||
+          'സൂപ്പർ അഡ്മിൻ നൗഫ്, ബി പെർഫ്യൂം സിആർഎം വിശകലനം പൂർത്തിയായിട്ടുണ്ട്.'
         const copilotMsg: Message = {
           id: `copilot-${Date.now()}`,
           role: 'copilot',
@@ -212,13 +229,14 @@ export function AdminVoiceCopilot() {
         }
         setMessages(prev => [...prev, copilotMsg])
 
-        // Automatically synthesize female voice playback
+        // Automatically synthesize natural female voice playback
         speakResponse(aiAnswer)
       } else {
         const errMsg: Message = {
           id: `err-${Date.now()}`,
           role: 'copilot',
-          content: 'I apologize, but I encountered a momentary telemetry lag. Please try again.',
+          content:
+            'ക്ഷമിക്കണം, ചെറിയൊരു സാങ്കേതിക തടസ്സം നേരിട്ടു. ദയവായി വീണ്ടും ശ്രമിക്കൂ.',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
         setMessages(prev => [...prev, errMsg])
@@ -250,7 +268,7 @@ export function AdminVoiceCopilot() {
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full" />
           </div>
           <span className="text-xs font-bold text-amber-200 tracking-wide font-serif hidden sm:inline">
-            Admin AI Voice Copilot
+            മലയാളം AI കോപൈലറ്റ്
           </span>
         </button>
       </div>
@@ -280,17 +298,17 @@ export function AdminVoiceCopilot() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-sm font-bold text-white font-serif tracking-wide">
-                      B Perfume Executive AI Copilot
+                      ബി പെർഫ്യൂം എക്സിക്യൂട്ടീവ് AI കോപൈലറ്റ്
                     </h3>
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/30">
-                      GPT-4o &amp; ElevenLabs
+                      GPT-4o &amp; ElevenLabs (മലയാളം)
                     </span>
                   </div>
                   <p className="text-[11px] text-amber-200/70 flex items-center gap-1.5 mt-0.5">
-                    <span>Professional Female Voice</span>
+                    <span>നാച്ചുറൽ മലയാളം വോയിസ്</span>
                     <span>•</span>
                     <span className={isSpeaking ? 'text-emerald-400 font-semibold animate-pulse' : 'text-slate-400'}>
-                      {isSpeaking ? 'Speaking reply...' : 'Listening ready'}
+                      {isSpeaking ? 'മറുപടി പറയുന്നു...' : isListening ? 'കേൾക്കുന്നു... സംസാരിക്കൂ' : 'സംസാരിക്കാൻ തയ്യാറാണ്'}
                     </span>
                   </p>
                 </div>
@@ -308,7 +326,7 @@ export function AdminVoiceCopilot() {
                       ? 'bg-red-500/20 text-red-400 border-red-500/30'
                       : 'bg-white/5 text-amber-300 border-white/10 hover:bg-white/10'
                   }`}
-                  title={voiceMuted ? 'Unmute AI Voice' : 'Mute AI Voice'}
+                  title={voiceMuted ? 'ശബ്ദം ഓൺ ചെയ്യുക' : 'ശബ്ദം മ്യൂട്ട് ചെയ്യുക'}
                 >
                   {voiceMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
                 </button>
@@ -324,13 +342,13 @@ export function AdminVoiceCopilot() {
               </div>
             </div>
 
-            {/* Quick Prompt Pills */}
+            {/* Quick Prompt Pills in Natural Malayalam */}
             <div className="px-4 py-2 bg-white/5 border-b border-white/10 flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar">
               {[
-                'Forecast our monthly revenue',
-                'Which advisor has top conversion?',
-                'Summarize 5,000 leads status',
-                'Check at-risk VIP clients',
+                'ഈ മാസത്തെ വരുമാന പ്രവചനം',
+                'കൂടുതൽ കൺവേർഷൻ ഉള്ള അഡ്വൈസർ ആര്?',
+                '5,000 ലീഡുകളുടെ സ്റ്റാറ്റസ് വിവരങ്ങൾ',
+                'ശ്രദ്ധിക്കേണ്ട വിഐപി ക്ലയന്റുകൾ',
               ].map(q => (
                 <button
                   key={q}
@@ -368,7 +386,7 @@ export function AdminVoiceCopilot() {
                         <button
                           onClick={() => speakResponse(m.content)}
                           className="hover:text-amber-400 transition ml-2"
-                          title="Replay female voice"
+                          title="ശബ്ദം വീണ്ടും കേൾക്കുക"
                         >
                           <Play size={10} />
                         </button>
@@ -381,7 +399,7 @@ export function AdminVoiceCopilot() {
               {isLoading && (
                 <div className="flex items-center gap-2 p-3 bg-slate-800/60 rounded-2xl border border-white/5 w-fit">
                   <Loader2 size={14} className="animate-spin text-amber-400" />
-                  <span className="text-xs text-amber-200/80">Analyzing live CRM telemetry...</span>
+                  <span className="text-xs text-amber-200/80">വിവരങ്ങൾ പരിശോധിക്കുന്നു...</span>
                 </div>
               )}
 
@@ -394,11 +412,11 @@ export function AdminVoiceCopilot() {
                     <span className="w-1 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     <span className="w-1 h-4 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '450ms' }} />
                   </div>
-                  <span>ElevenLabs Female Voice Active</span>
+                  <span>ElevenLabs മലയാളം വോയിസ് ആക്ടീവ്</span>
                   <button
                     onClick={stopVoiceAudio}
                     className="ml-2 p-1 rounded-sm hover:bg-amber-400/20 text-amber-200"
-                    title="Stop playback"
+                    title="വോയിസ് നിർത്തുക"
                   >
                     <Square size={10} />
                   </button>
@@ -419,7 +437,7 @@ export function AdminVoiceCopilot() {
                     ? 'bg-red-500 text-white animate-pulse ring-4 ring-red-500/40'
                     : 'bg-amber-400 text-slate-950 hover:bg-amber-300 shadow-md'
                 }`}
-                title={isListening ? 'Listening... click to stop' : 'Tap to speak to AI Copilot'}
+                title={isListening ? 'കേൾക്കുന്നു... നിർത്താൻ ടാപ്പ് ചെയ്യുക' : 'മലയാളത്തിൽ സംസാരിക്കാൻ ടാപ്പ് ചെയ്യുക'}
               >
                 {isListening ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
@@ -431,7 +449,7 @@ export function AdminVoiceCopilot() {
                 onKeyDown={e => {
                   if (e.key === 'Enter') handleSendMessage()
                 }}
-                placeholder={isListening ? 'Listening to your voice...' : 'Ask your AI Fragrance Copilot...'}
+                placeholder={isListening ? 'മലയാളത്തിൽ സംസാരിക്കൂ...' : 'നിങ്ങളുടെ ചോദ്യങ്ങൾ ചോദിക്കുക...'}
                 className="flex-1 bg-slate-800/90 border border-white/10 rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-400 focus:outline-hidden focus:border-amber-400 transition"
               />
 
