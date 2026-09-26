@@ -21,18 +21,18 @@ export async function GET(req: NextRequest) {
     }
 
     if (strength && strength !== 'ALL') {
-      products = products.filter(p => p.strength.toUpperCase() === strength.toUpperCase())
+      products = products.filter((p: any) => p.strength?.toUpperCase() === strength.toUpperCase())
     }
 
     if (gender && gender !== 'ALL') {
-      products = products.filter(p => p.gender.toUpperCase() === gender.toUpperCase())
+      products = products.filter((p: any) => p.gender?.toUpperCase() === gender.toUpperCase())
     }
 
     if (query) {
       products = products.filter(
-        p =>
-          p.productCode.toLowerCase().includes(query) ||
-          p.productName.toLowerCase().includes(query) ||
+        (p: any) =>
+          p.productCode?.toLowerCase().includes(query) ||
+          p.productName?.toLowerCase().includes(query) ||
           (p.inspiredVersion && p.inspiredVersion.toLowerCase().includes(query)) ||
           (p.topNotes && p.topNotes.toLowerCase().includes(query)) ||
           (p.middleNotes && p.middleNotes.toLowerCase().includes(query)) ||

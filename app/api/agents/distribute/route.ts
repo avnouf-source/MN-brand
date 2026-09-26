@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     // Partition leads equally in round-robin fashion
     let updatedCount = 0
-    const updates = leads.map((lead, index) => {
+    const updates = leads.map((lead: any, index: number) => {
       const assignedAgent = agents[index % agents.length]
       return prisma.lead.update({
         where: { id: lead.id },

@@ -11,8 +11,8 @@ export default async function CatalogPage() {
       orderBy: { productCode: 'asc' },
     })
 
-    if (dbProds.length > 0) {
-      products = dbProds.map(p => ({
+      if (dbProds && dbProds.length > 0) {
+      products = dbProds.map((p: any) => ({
         id: p.id,
         productCode: p.productCode,
         productName: p.productName,

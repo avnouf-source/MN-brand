@@ -351,29 +351,29 @@ export function SettingsForm({ initialConfig }: { initialConfig: Config | null }
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
             <div className="flex items-center gap-2">
               <Database size={18} style={{ color: '#C9A84C' }} />
-              <h3 className="text-base font-bold text-slate-900">Production Cloud PostgreSQL Setup</h3>
+              <h3 className="text-base font-bold text-slate-900">Vercel &amp; Firebase Full-Stack Architecture</h3>
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Netlify serverless functions have a read-only, ephemeral filesystem where SQLite files (<code className="bg-slate-100 px-1 rounded text-xs">dev.db</code>) reset on redeploys. To make all 2,000+ leads, 50 staff accounts, and conversations permanent in production, connect a free Cloud PostgreSQL instance (such as <strong>Supabase</strong> or <strong>Neon</strong>).
+              This application runs on a high-performance <strong>Vercel (Frontend &amp; Edge API)</strong> and <strong>Google Firebase (Cloud Firestore &amp; Auth)</strong> architecture. All leads, client conversations, team members, and luxury catalogs persist permanently across real-time global nodes.
             </p>
 
             <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono space-y-2">
-              <div className="font-semibold text-slate-700">Prisma PostgreSQL Connection Format:</div>
-              <div className="text-amber-800 break-all select-all">
-                postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+              <div className="font-semibold text-slate-700">Standard Vercel Environment Variables:</div>
+              <div className="text-amber-800 break-all select-all space-y-1">
+                <div>NEXT_PUBLIC_FIREBASE_API_KEY = &quot;AIzaSy...&quot;</div>
+                <div>NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = &quot;your-app.firebaseapp.com&quot;</div>
+                <div>NEXT_PUBLIC_FIREBASE_PROJECT_ID = &quot;your-project-id&quot;</div>
+                <div>NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = &quot;your-app.appspot.com&quot;</div>
+                <div>NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = &quot;123456789&quot;</div>
+                <div>NEXT_PUBLIC_FIREBASE_APP_ID = &quot;1:123456789:web:abcdef&quot;</div>
               </div>
             </div>
 
             <div className="space-y-2 text-xs text-slate-600">
-              <p className="font-semibold text-slate-800">Quick 3-Step Production Activation:</p>
-              <p>1. Create a free PostgreSQL database at <strong>Supabase.com</strong> or <strong>Neon.tech</strong>.</p>
-              <p>2. In your <strong>Netlify Dashboard</strong> → Site Settings → Environment Variables, set:</p>
-              <ul className="list-disc pl-5 space-y-1 font-mono text-[11px] text-slate-700">
-                <li>DATABASE_URL = &quot;postgresql://...&quot;</li>
-                <li>NEXTAUTH_SECRET = &quot;mnbrand-production-secret-2024&quot;</li>
-                <li>NEXTAUTH_URL = &quot;https://your-netlify-site.netlify.app&quot;</li>
-              </ul>
-              <p>3. Run <code className="bg-slate-100 px-1 rounded">npx prisma db push</code> or seed via <code className="bg-slate-100 px-1 rounded">/api/leads/seed-bulk</code>.</p>
+              <p className="font-semibold text-slate-800">Quick 2-Step Vercel Deployment:</p>
+              <p>1. Import your GitHub repository into <strong>Vercel.com</strong>.</p>
+              <p>2. Add the Firebase credentials above in <strong>Project Settings → Environment Variables</strong>.</p>
+              <p>3. Vercel automatically deploys with zero-config Next.js optimization.</p>
             </div>
           </div>
         </div>

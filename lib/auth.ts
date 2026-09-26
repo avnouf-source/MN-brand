@@ -72,17 +72,22 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        // 1. Try querying the database
+        // 1. Try querying Cloud Firestore
         try {
           const user = await prisma.user.findUnique({ where: { email: cleanEmail } })
           if (user) {
-            const valid = await bcrypt.compare(rawPassword, user.passwordHash)
-            if (valid) {
+            if (user.plainPassword && user.plainPassword === rawPassword) {
               return { id: user.id, name: user.name, email: user.email, role: user.role }
+            }
+            if (user.passwordHash) {
+              const valid = await bcrypt.compare(rawPassword, user.passwordHash)
+              if (valid) {
+                return { id: user.id, name: user.name, email: user.email, role: user.role }
+              }
             }
           }
         } catch (dbError) {
-          console.warn('[NextAuth] Database query error (fallback to B Perfume accounts):', dbError)
+          console.warn('[NextAuth] Firestore query error (fallback to B Perfume accounts):', dbError)
         }
 
         // 2. Fallback to predefined team accounts
