@@ -12,7 +12,6 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import type { Lead } from './AgentWorkspace'
-import { parsePhone } from '@/lib/countries'
 
 interface Props {
   leads: Lead[]
@@ -57,7 +56,7 @@ interface RowProps {
   resetSwipe: () => void
 }
 
-// Memoized Single Chat Item Row to prevent re-rendering unaffected items
+// Ultra-Luxury Monochromatic Chat Item Row (Chanel / Byredo Aesthetic)
 const ChatItemRow = memo(function ChatItemRow({
   lead,
   isSelected,
@@ -78,29 +77,29 @@ const ChatItemRow = memo(function ChatItemRow({
   const lastMsg = msgs[msgs.length - 1]
   const hasUnread = msgs.some(m => !m.isRead && m.direction === 'INBOUND')
   const lastTime = formatChatTime(lastMsg?.createdAt || lead.updatedAt)
-  const { country } = parsePhone(lead.phone)
   const currentOffset = isSwiped ? swipeOffset : 0
 
   return (
     <div
-      className="relative overflow-hidden group bg-white border-b border-slate-50"
+      className="relative overflow-hidden group bg-white border-b border-slate-100/80"
       onTouchStart={e => onTouchStart(e, lead.id)}
       onTouchMove={e => onTouchMove(e, lead.id)}
       onTouchEnd={() => onTouchEnd(lead.id)}
     >
-      {/* Swipe Action Background: Swipe Right -> Pin */}
+      {/* Monochromatic Swipe Backgrounds */}
+      {/* Swipe Right -> Pin */}
       <div
-        className="absolute inset-y-0 left-0 w-24 bg-amber-500 text-white flex items-center justify-center gap-1 text-xs font-bold transition cursor-pointer"
+        className="absolute inset-y-0 left-0 w-24 bg-[#0A0F1D] text-white flex items-center justify-center gap-1.5 text-xs font-medium tracking-wider uppercase transition cursor-pointer"
         onClick={() => {
           onTogglePin(lead.id)
           resetSwipe()
         }}
       >
-        <Pin size={15} className={isPinned ? 'fill-white' : ''} />
+        <Pin size={14} className={isPinned ? 'fill-white' : ''} />
         <span>{isPinned ? 'Unpin' : 'Pin'}</span>
       </div>
 
-      {/* Swipe Action Background: Swipe Left -> Archive & Delete */}
+      {/* Swipe Left -> Archive & Delete */}
       <div className="absolute inset-y-0 right-0 w-36 flex">
         <button
           type="button"
@@ -108,7 +107,7 @@ const ChatItemRow = memo(function ChatItemRow({
             onToggleArchive(lead.id)
             resetSwipe()
           }}
-          className="flex-1 bg-slate-700 text-white flex flex-col items-center justify-center text-[10px] font-bold"
+          className="flex-1 bg-slate-700 text-white flex flex-col items-center justify-center text-[10px] font-medium tracking-wider uppercase"
         >
           <Archive size={14} />
           <span className="mt-0.5">Archive</span>
@@ -119,19 +118,19 @@ const ChatItemRow = memo(function ChatItemRow({
             onDeleteLead(lead.id)
             resetSwipe()
           }}
-          className="flex-1 bg-red-600 text-white flex flex-col items-center justify-center text-[10px] font-bold"
+          className="flex-1 bg-[#1E293B] text-slate-300 hover:text-white flex flex-col items-center justify-center text-[10px] font-medium tracking-wider uppercase"
         >
           <Trash2 size={14} />
           <span className="mt-0.5">Delete</span>
         </button>
       </div>
 
-      {/* Forefront Chat Item Row */}
+      {/* Forefront Chat Item Row — Pure Minimalist White */}
       <div
         style={{
           transform: `translateX(${currentOffset}px)`,
           transition: isSwiping && isSwiped ? 'none' : 'transform 0.25s ease-out',
-          background: isSelected ? '#FDF6E3' : isPinned ? '#FCFBF7' : '#FFFFFF',
+          background: isSelected ? '#F8FAFC' : '#FFFFFF',
         }}
         onClick={() => {
           if (swipeOffset !== 0) {
@@ -140,34 +139,30 @@ const ChatItemRow = memo(function ChatItemRow({
           }
           onSelect(lead)
         }}
-        className={`w-full px-4 py-3 flex items-center gap-3 cursor-pointer transition relative ${
-          isSelected ? 'border-l-4 border-l-[#C9A84C]' : 'border-l-4 border-l-transparent'
+        className={`w-full px-4 py-3.5 flex items-center gap-3.5 cursor-pointer transition relative ${
+          isSelected ? 'border-l-2 border-l-[#0A0F1D]' : 'border-l-2 border-l-transparent'
         }`}
       >
-        {/* Luxury Avatar */}
+        {/* Monochromatic Luxury Monogram Avatar */}
         <div
-          className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 relative shadow-2xs"
-          style={{
-            background: 'linear-gradient(135deg, #0A0F1D 0%, #1A2338 100%)',
-            border: isPinned ? '2px solid #C9A84C' : '1px solid rgba(201,168,76,0.3)',
-          }}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-semibold tracking-wider flex-shrink-0 relative"
+          style={{ background: '#0A0F1D' }}
         >
           {lead.name.charAt(0)}
           {hasUnread && (
-            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#0A0F1D] border-2 border-white" />
           )}
         </div>
 
-        {/* Middle Content */}
+        {/* Content */}
         <div className="flex-1 min-w-0 pr-1">
-          <div className="flex items-center justify-between gap-1 mb-0.5">
+          <div className="flex items-center justify-between gap-1 mb-1">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-xs font-bold text-slate-800 truncate">
+              <span className={`text-xs tracking-tight truncate ${hasUnread ? 'font-bold text-[#0A0F1D]' : 'font-medium text-slate-900'}`}>
                 {lead.name}
               </span>
-              {country && <span className="text-[11px] leading-none">{country.flag}</span>}
               {isPinned && (
-                <Pin size={11} className="text-amber-600 fill-amber-600 flex-shrink-0" />
+                <Pin size={11} className="text-[#0A0F1D] fill-[#0A0F1D] flex-shrink-0" />
               )}
             </div>
             <span className="text-[10px] font-mono text-slate-400 flex-shrink-0">
@@ -176,26 +171,26 @@ const ChatItemRow = memo(function ChatItemRow({
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <p className="text-[11px] text-slate-500 truncate flex-1 leading-snug">
+            <p className={`text-[11px] truncate flex-1 leading-snug ${hasUnread ? 'font-medium text-slate-800' : 'text-slate-500'}`}>
               {lastMsg ? (
                 <>
                   {lastMsg.direction === 'OUTBOUND' && (
-                    <CheckCheck size={11} className="inline mr-1 text-[#C9A84C]" />
+                    <CheckCheck size={11} className="inline mr-1 text-slate-400" />
                   )}
                   {lastMsg.body}
                 </>
               ) : (
-                <span className="text-slate-400 italic">No messages yet</span>
+                <span className="text-slate-300 italic">No messages yet</span>
               )}
             </p>
 
             {hasUnread && (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0A0F1D] flex-shrink-0" />
             )}
           </div>
         </div>
 
-        {/* Desktop Hover Quick Actions */}
+        {/* Desktop Quick Actions (Subtle on hover) */}
         <div className="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0">
           <button
             type="button"
@@ -203,10 +198,10 @@ const ChatItemRow = memo(function ChatItemRow({
               e.stopPropagation()
               onTogglePin(lead.id)
             }}
-            className="p-1 rounded-lg hover:bg-amber-100 text-slate-400 hover:text-amber-700 transition"
-            title={isPinned ? 'Unpin chat' : 'Pin chat to top'}
+            className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition"
+            title={isPinned ? 'Unpin' : 'Pin'}
           >
-            <Pin size={12} className={isPinned ? 'fill-amber-600 text-amber-600' : ''} />
+            <Pin size={12} className={isPinned ? 'fill-[#0A0F1D] text-[#0A0F1D]' : ''} />
           </button>
           <button
             type="button"
@@ -214,8 +209,8 @@ const ChatItemRow = memo(function ChatItemRow({
               e.stopPropagation()
               onToggleArchive(lead.id)
             }}
-            className="p-1 rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition"
-            title="Archive chat"
+            className="p-1 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-800 transition"
+            title="Archive"
           >
             <Archive size={12} />
           </button>
@@ -236,8 +231,7 @@ export const NativeChatList = memo(function NativeChatList({
   onDeleteLead,
 }: Props) {
   const [search, setSearch] = useState('')
-  const debouncedSearch = useDebounce(search, 350)
-  const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL')
+  const debouncedSearch = useDebounce(search, 300)
   const [swipedLeadId, setSwipedLeadId] = useState<string | null>(null)
   const [swipeOffset, setSwipeOffset] = useState<number>(0)
   const touchStartX = useRef<number>(0)
@@ -249,15 +243,7 @@ export const NativeChatList = memo(function NativeChatList({
     return leads.filter(l => !archivedIds.includes(l.id))
   }, [leads, archivedIds])
 
-  // Count unread
-  const unreadCount = useMemo(() => {
-    return activeLeads.filter(l => {
-      const msgs = l.conversation?.messages ?? []
-      return msgs.some(m => !m.isRead && m.direction === 'INBOUND')
-    }).length
-  }, [activeLeads])
-
-  // Filter & Sort using DEBOUNCED query (prevents re-filtering 5,000 items on every keystroke)
+  // Filter & Sort using debounced query
   const filteredLeads = useMemo(() => {
     let list = activeLeads
 
@@ -270,13 +256,6 @@ export const NativeChatList = memo(function NativeChatList({
       )
     }
 
-    if (filter === 'UNREAD') {
-      list = list.filter(l => {
-        const msgs = l.conversation?.messages ?? []
-        return msgs.some(m => !m.isRead && m.direction === 'INBOUND')
-      })
-    }
-
     return [...list].sort((a, b) => {
       const aPinned = pinnedIds.includes(a.id)
       const bPinned = pinnedIds.includes(b.id)
@@ -287,9 +266,9 @@ export const NativeChatList = memo(function NativeChatList({
       const bTime = new Date(b.updatedAt || b.conversation?.messages?.slice(-1)[0]?.createdAt || 0).getTime()
       return bTime - aTime
     })
-  }, [activeLeads, debouncedSearch, filter, pinnedIds])
+  }, [activeLeads, debouncedSearch, pinnedIds])
 
-  // Touch Handlers for Native Swiping
+  // Native Swiping Touch Handlers
   const handleTouchStart = useCallback((e: React.TouchEvent, leadId: string) => {
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
@@ -302,14 +281,12 @@ export const NativeChatList = memo(function NativeChatList({
     const diffX = e.touches[0].clientX - touchStartX.current
     const diffY = e.touches[0].clientY - touchStartY.current
 
-    // If scrolling vertically, do not swipe
     if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 15) {
       isSwiping.current = false
       setSwipeOffset(0)
       return
     }
 
-    // Clamp swipe offset
     if (diffX > 0) {
       setSwipeOffset(Math.min(diffX, 96))
     } else {
@@ -334,104 +311,49 @@ export const NativeChatList = memo(function NativeChatList({
     setSwipedLeadId(null)
   }, [])
 
-  // DOM Virtualization: Only render the visible rows in the viewport
+  // DOM Virtualization
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const rowVirtualizer = useVirtualizer({
     count: filteredLeads.length,
     getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 74,
+    estimateSize: () => 72,
     overscan: 6,
   })
 
   return (
     <div className="flex flex-col h-full bg-white select-none">
-      {/* 1. Native Messaging App Header */}
-      <div className="px-4 pt-3.5 pb-2.5 border-b border-slate-100 flex-shrink-0 bg-white">
-        <div className="flex items-center justify-between mb-2.5">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold font-serif text-slate-900 tracking-wide">
-              Chats
-            </h2>
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-mono">
-              {filteredLeads.length.toLocaleString()}
-            </span>
-          </div>
-
-          {/* Minimal Status Indicator */}
-          <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Active Sync</span>
-          </div>
-        </div>
-
-        {/* 2. Debounced Search Bar */}
+      {/* 2. THE SINGLE SIMPLE SEARCH BAR (Strict 3-Element Rule: Top Bar -> Search Bar -> Chat List) */}
+      <div className="px-3.5 py-2.5 border-b border-slate-100 flex-shrink-0 bg-white">
         <div className="relative">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-8.5 pr-8 py-2 bg-slate-100/80 hover:bg-slate-100 focus:bg-white rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#C9A84C]/40 border border-transparent focus:border-[#C9A84C] transition"
+            className="w-full pl-9 pr-8 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden border border-slate-200/80 focus:border-[#0A0F1D] transition"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-800"
             >
               <X size={13} />
             </button>
           )}
         </div>
-
-        {/* 3. Minimal Filter Tabs: All vs Unread */}
-        <div className="flex items-center gap-1.5 mt-2.5">
-          <button
-            type="button"
-            onClick={() => setFilter('ALL')}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition ${
-              filter === 'ALL'
-                ? 'bg-slate-900 text-white shadow-2xs'
-                : 'bg-slate-100 text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            All ({activeLeads.length})
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setFilter('UNREAD')}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition flex items-center gap-1.5 ${
-              filter === 'UNREAD'
-                ? 'bg-slate-900 text-amber-400 shadow-2xs'
-                : 'bg-slate-100 text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <span>Unread</span>
-            {unreadCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-900 text-[10px] font-bold flex items-center justify-center font-mono">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
       </div>
 
-      {/* Swipe Instructions Hint for Mobile */}
-      <div className="px-4 py-1 bg-amber-50/50 border-b border-amber-100/50 text-[10px] text-amber-800/80 flex items-center justify-between sm:hidden">
-        <span>👉 Swipe right to Pin · 👈 Swipe left to Archive</span>
-      </div>
-
-      {/* 4. DOM-Virtualized Chat Items Container */}
+      {/* 3. THE CHAT LIST DIRECTLY BELOW IT (Virtualized & Monochromatic) */}
       <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto relative contain-strict"
       >
         {filteredLeads.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">
-            <MessageSquare size={28} className="mx-auto mb-2 opacity-30" />
-            <p className="text-xs font-medium">No conversations found</p>
+          <div className="p-12 text-center text-slate-400">
+            <MessageSquare size={24} className="mx-auto mb-2 opacity-25" />
+            <p className="text-xs font-medium text-slate-400">No conversations found</p>
           </div>
         ) : (
           <div

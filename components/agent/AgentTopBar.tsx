@@ -89,30 +89,54 @@ export function AgentTopBar({ user }: Props) {
 
           {/* Profile dropdown */}
           <div className="relative">
-            <button onClick={() => setOpen(!open)} className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl hover:bg-slate-50 transition">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: '#0F1729' }}>
-                {user.name?.charAt(0) ?? 'A'}
+            <button
+              onClick={() => setOpen(!open)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 transition cursor-pointer"
+              aria-label="User profile menu"
+            >
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold"
+                style={{ background: '#0A0F1D' }}
+              >
+                {user.name?.charAt(0) ?? 'N'}
               </div>
-              <span className="hidden md:block text-sm font-medium text-slate-700 max-w-[120px] truncate">{user.name}</span>
+              <span className="hidden md:block text-xs font-medium text-slate-800 max-w-[120px] truncate">
+                {user.name}
+              </span>
               <ChevronDown size={13} className="text-slate-400" />
             </button>
 
             {open && (
-              <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100">
-                  <p className="text-xs font-semibold text-slate-700 truncate">{user.name}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
-                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ background: '#FDF6E3', color: '#C9A84C' }}>
-                    <Globe size={9} /> {user.role}
+              <div className="absolute right-0 top-full mt-1.5 w-56 bg-white rounded-xl shadow-lg border border-slate-100 z-50 overflow-hidden text-xs">
+                <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                  <p className="font-semibold text-slate-900 truncate">{user.name}</p>
+                  <p className="text-[11px] font-mono text-slate-400 truncate">{user.email}</p>
+                  <span className="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wider bg-slate-200 text-slate-700">
+                    {user.role === 'ADMIN' ? 'Super Admin' : user.role === 'SUB_ADMIN' ? 'Sub-Admin' : 'Sales Advisor'}
                   </span>
                 </div>
-                {user.role === 'ADMIN' && (
-                  <Link href="/admin/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 hover:bg-slate-50 transition">
-                    <Shield size={13} /> Admin Panel
+
+                {/* Relocated Executive Dashboard (Accessible via 'N' icon menu) */}
+                {(user.role === 'ADMIN' || user.role === 'SUB_ADMIN') && (
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-slate-800 hover:bg-slate-50 transition font-medium border-b border-slate-100"
+                  >
+                    <Shield size={14} className="text-slate-800" />
+                    <div className="truncate">
+                      <p className="leading-none">Executive Dashboard</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">Analytics, Orders &amp; Pipeline</p>
+                    </div>
                   </Link>
                 )}
-                <button onClick={() => signOut({ callbackUrl: '/login' })} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition">
-                  <LogOut size={13} /> Sign Out
+
+                <button
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 text-slate-600 hover:text-red-600 hover:bg-red-50/50 transition cursor-pointer"
+                >
+                  <LogOut size={13} />
+                  <span>Sign Out</span>
                 </button>
               </div>
             )}

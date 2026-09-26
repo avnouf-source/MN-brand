@@ -51,7 +51,7 @@ export function MobileBottomNav() {
               href="/admin/dashboard"
               className="flex flex-col items-center justify-center flex-1 py-1 transition"
               style={{
-                color: pathname === '/admin/dashboard' ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)',
+                color: pathname === '/admin/dashboard' ? '#FFFFFF' : 'rgba(255, 255, 255, 0.45)',
               }}
             >
               <LayoutDashboard size={18} />
@@ -63,7 +63,7 @@ export function MobileBottomNav() {
               href="/admin/catalog"
               className="flex flex-col items-center justify-center flex-1 py-1 transition"
               style={{
-                color: pathname === '/admin/catalog' ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)',
+                color: pathname === '/admin/catalog' ? '#FFFFFF' : 'rgba(255, 255, 255, 0.45)',
               }}
             >
               <Package size={18} />
@@ -75,7 +75,7 @@ export function MobileBottomNav() {
               href="/agent/workspace"
               className="flex flex-col items-center justify-center flex-1 py-1 transition"
               style={{
-                color: pathname.startsWith('/agent') ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)',
+                color: pathname.startsWith('/agent') ? '#FFFFFF' : 'rgba(255, 255, 255, 0.45)',
               }}
             >
               <MessageCircle size={18} />
@@ -87,7 +87,7 @@ export function MobileBottomNav() {
               href="/admin/team"
               className="flex flex-col items-center justify-center flex-1 py-1 transition"
               style={{
-                color: pathname === '/admin/team' ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)',
+                color: pathname === '/admin/team' ? '#FFFFFF' : 'rgba(255, 255, 255, 0.45)',
               }}
             >
               <Users size={18} />
@@ -98,7 +98,7 @@ export function MobileBottomNav() {
             <button
               type="button"
               onClick={handleOpenDrawer}
-              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-amber-400"
+              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-white"
             >
               <Menu size={18} />
               <span className="text-[10px] font-medium mt-1">Menu</span>
@@ -106,52 +106,31 @@ export function MobileBottomNav() {
           </>
         ) : (
           <>
-            {/* Agent Tab 1: Chats */}
+            {/* Agent Tab 1: Native Chats (Strict 3-element pure chat view) */}
             <button
               type="button"
               onClick={() => handleSwitchAgentTab('chats')}
               className="flex flex-col items-center justify-center flex-1 py-1 transition"
-              style={{ color: activeAgentTab === 'chats' ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)' }}
+              style={{ color: activeAgentTab === 'chats' ? '#FFFFFF' : 'rgba(255, 255, 255, 0.45)' }}
             >
               <MessageCircle size={18} />
               <span className="text-[10px] font-medium mt-1">Chats</span>
             </button>
 
-            {/* Agent Tab 2: Leads & Pipeline Dashboard */}
-            <button
-              type="button"
-              onClick={() => handleSwitchAgentTab('leads')}
-              className="flex flex-col items-center justify-center flex-1 py-1 transition"
-              style={{ color: activeAgentTab === 'leads' ? '#C9A84C' : 'rgba(255, 255, 255, 0.5)' }}
-            >
-              <Users size={18} />
-              <span className="text-[10px] font-medium mt-1">Leads</span>
-            </button>
-
-            {/* Agent Tab 3: Catalog */}
+            {/* Agent Tab 2: Catalog */}
             <Link
               href="/admin/catalog"
-              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-amber-400"
+              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-white"
             >
               <Package size={18} />
               <span className="text-[10px] font-medium mt-1">Catalog</span>
             </Link>
 
-            {/* Agent Tab 4: Tasks Drawer */}
-            <button
-              type="button"
-              onClick={() => handleSwitchAgentTab('tasks')}
-              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-amber-400"
-            >
-              <CheckSquare size={18} />
-              <span className="text-[10px] font-medium mt-1">Tasks</span>
-            </button>
-
-            {/* Agent Tab 5: Global Dialer */}
+            {/* Agent Tab 3: Global Dialer */}
             <button
               type="button"
               onClick={handleOpenDialer}
-              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-amber-400"
+              className="flex flex-col items-center justify-center flex-1 py-1 transition text-white/50 active:text-white"
             >
               <PhoneCall size={18} />
               <span className="text-[10px] font-medium mt-1">Dialer</span>
