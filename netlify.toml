@@ -4,12 +4,22 @@
 
 [build.environment]
   DISABLE_NETLIFY_DRAWER = "true"
+  DATABASE_URL = "file:./dev.db"
+  NEXTAUTH_SECRET = "bperfume-crm-secret-2024-super-secure"
+  NEXTAUTH_URL = "https://mnbrand.netlify.app"
 
 [context.production.environment]
   DISABLE_NETLIFY_DRAWER = "true"
+  DATABASE_URL = "file:./dev.db"
+  NEXTAUTH_SECRET = "bperfume-crm-secret-2024-super-secure"
+  NEXTAUTH_URL = "https://mnbrand.netlify.app"
 
 [context.deploy-preview.environment]
   DISABLE_NETLIFY_DRAWER = "true"
+  DATABASE_URL = "file:./dev.db"
+  NEXTAUTH_SECRET = "bperfume-crm-secret-2024-super-secure"
 
 [context.branch-deploy.environment]
   DISABLE_NETLIFY_DRAWER = "true"
+  DATABASE_URL = "file:./dev.db"
+  NEXTAUTH_SECRET = "bperfume-crm-secret-2024-super-secure"
