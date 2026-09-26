@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { signOut } from 'next-auth/react'
-import { Bell, ChevronDown, LogOut, Shield, Globe, PhoneCall } from 'lucide-react'
+import { Bell, ChevronDown, LogOut, Shield, Globe, PhoneCall, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import { GlobalDialerModal } from '@/components/agent/GlobalDialerModal'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
+import { TrainingSandbox } from '@/components/training/TrainingSandbox'
 
 interface Props { user: { name?: string; email?: string; role?: string } }
 
@@ -12,6 +13,7 @@ export function AgentTopBar({ user }: Props) {
   const [open, setOpen] = useState(false)
   const [online, setOnline] = useState(false)
   const [dialerOpen, setDialerOpen] = useState(false)
+  const [trainingModalOpen, setTrainingModalOpen] = useState(false)
 
   async function toggleStatus() {
     const next = !online
@@ -54,6 +56,16 @@ export function AgentTopBar({ user }: Props) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Training Sandbox Modal Trigger */}
+          <button
+            onClick={() => setTrainingModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-amber-400/80 bg-amber-500/10 hover:bg-amber-500/20 text-xs font-bold text-amber-900 dark:text-amber-300 transition shadow-2xs active:scale-95 cursor-pointer"
+            title="Open Isolated AI Training Sandbox"
+          >
+            <Sparkles size={13} className="text-amber-500" />
+            <span className="hidden sm:inline">Training Sandbox</span>
+          </button>
+
           {/* Direct International Calling / Global Dialer Button */}
           <button
             onClick={() => setDialerOpen(true)}
@@ -150,6 +162,15 @@ export function AgentTopBar({ user }: Props) {
         onClose={() => setDialerOpen(false)}
         onSaveAsLead={handleSaveAsLeadFromDialer}
       />
+
+      {/* Isolated Training Sandbox Modal */}
+      {trainingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/75 backdrop-blur-md animate-fadeIn">
+          <div className="w-full max-w-4xl h-[90vh] rounded-3xl overflow-hidden shadow-2xl border border-amber-500/40">
+            <TrainingSandbox isModal={true} onClose={() => setTrainingModalOpen(false)} />
+          </div>
+        </div>
+      )}
     </>
   )
 }

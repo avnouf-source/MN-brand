@@ -23,6 +23,7 @@ const NAV = [
   { href: '/admin/team', icon: Users, label: 'Team Hierarchy' },
   { href: '/admin/automation', icon: Bot, label: 'Automation & Refills' },
   { href: '/admin/templates', icon: FileText, label: 'Templates' },
+  { href: '/training-hub', icon: Sparkles, label: 'Training Sandbox' },
   { href: '/admin/logs', icon: ClipboardList, label: 'Activity Logs' },
   { href: '/admin/security', icon: ShieldCheck, label: 'Security & GDPR' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },

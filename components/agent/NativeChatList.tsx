@@ -262,9 +262,15 @@ export const NativeChatList = memo(function NativeChatList({
   const touchStartY = useRef<number>(0)
   const isSwiping = useRef<boolean>(false)
 
-  // Filter out archived leads
+  // Filter out archived leads AND strictly exclude any AI Test / Mock client from live CRM chat
   const activeLeads = useMemo(() => {
-    return leads.filter(l => !archivedIds.includes(l.id))
+    return leads.filter(
+      l =>
+        !archivedIds.includes(l.id) &&
+        !l.name.toLowerCase().includes('ai test') &&
+        !l.name.toLowerCase().includes('mock client') &&
+        !l.name.toLowerCase().includes('training')
+    )
   }, [leads, archivedIds])
 
   // Count leads per WhatsApp Business label
