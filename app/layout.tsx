@@ -54,6 +54,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   window.addEventListener('load', purgeNetlifyBadge);
                   var observer = new MutationObserver(function() { purgeNetlifyBadge(); });
                   observer.observe(document.documentElement, { childList: true, subtree: true });
+
+                  // Ensure service worker updates cleanly and purges broken legacy caches
+                  if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(function(regs) {
+                      for (var i = 0; i < regs.length; i++) {
+                        regs[i].update();
+                      }
+                    });
+                  }
+                  if ('caches' in window) {
+                    caches.keys().then(function(keys) {
+                      keys.forEach(function(k) {
+                        if (k.indexOf('bperfume-crm-v3') !== -1) {
+                          caches.delete(k);
+                        }
+                      });
+                    });
+                  }
                 }
               } catch(e) {}
             `,
