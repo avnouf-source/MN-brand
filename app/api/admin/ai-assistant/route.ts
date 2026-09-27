@@ -6,6 +6,8 @@ import { generate50Agents, generate2000Leads } from '@/lib/bulk-generator'
 
 export const dynamic = 'force-dynamic'
 
+import { OPENAI_CRM_TOOLS, executeCRMToolCall, parseMalayalamVoiceIntent, CRMActionResult } from '@/lib/crm-controller'
+
 interface AIAnalysisPayload {
   prompt: string
   action?: 'audit' | 'forecast' | 'agents' | 'risk' | 'report' | 'custom'
@@ -26,6 +28,15 @@ export async function POST(req: NextRequest) {
   const openAiKey = process.env.OPENAI_API_KEY
   if (openAiKey && openAiKey !== 'demo_dummy_key') {
     try {
+      const messages: any[] = [
+        {
+          role: 'system',
+          content:
+            'You are the Executive AI Copilot and Omniscient System Controller for B Perfume. Speak strictly in natural, conversational Malayalam script (not English or Manglish). Do not use highly formal, robotic translations. Speak casually and respectfully like a real human Malayali assistant talking to Super Admin Nouf. You have direct backend tools (Function Calling) connected to our live CRM database: reassignLeads, generatePDFReport, changeLeadStatus, blockUser, and queryCRMAnalytics. When Super Admin Nouf gives an action command (e.g. reassigning leads, downloading reports, changing statuses, blocking accounts) or asks deep database analytics questions (e.g. lowest conversion agent, pending important leads), you MUST call the respective tool. Once the tool executes, explain the result clearly and respectfully in Malayalam.',
+        },
+        { role: 'user', content: prompt },
+      ]
+
       const openAiRes = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -34,22 +45,81 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify({
           model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are the Executive AI Copilot for B Perfume. Speak strictly in natural, conversational Malayalam script (not English or Manglish). Do not use highly formal, robotic translations. Speak casually and respectfully like a real human Malayali assistant talking to Super Admin Nouf. Analyze our CRM data across 5,000 Indian leads, 8 dedicated luxury sales advisors (Adarsh, Fathimath Shifa, Nandana, Nouf, Rizvan, Sajila, Sajna, Salih), and CITYMAN Extrait flacon orders, and provide clear, respectful, executive-grade answers in natural Malayalam.',
-            },
-            { role: 'user', content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 600,
+          messages,
+          tools: OPENAI_CRM_TOOLS,
+          tool_choice: 'auto',
+          temperature: 0.6,
+          max_tokens: 800,
         }),
       })
 
       if (openAiRes.ok) {
         const data = await openAiRes.json()
-        const gptAnswer = data?.choices?.[0]?.message?.content
+        const choice = data?.choices?.[0]
+        const message = choice?.message
+
+        // If GPT-4o requested tool execution
+        if (message?.tool_calls && message.tool_calls.length > 0) {
+          const executedActions: CRMActionResult[] = []
+          messages.push(message)
+
+          for (const toolCall of message.tool_calls) {
+            let parsedArgs = {}
+            try {
+              parsedArgs = JSON.parse(toolCall.function.arguments || '{}')
+            } catch (e) {
+              console.warn('[Tool Arguments Parse Error]:', e)
+            }
+
+            const actionResult = await executeCRMToolCall(toolCall.function.name, parsedArgs)
+            executedActions.push(actionResult)
+
+            messages.push({
+              role: 'tool',
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(actionResult),
+            })
+          }
+
+          // Follow-up call to GPT-4o for final natural Malayalam voice synthesis
+          const secondCallRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${openAiKey}`,
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              messages,
+              temperature: 0.6,
+              max_tokens: 600,
+            }),
+          })
+
+          if (secondCallRes.ok) {
+            const secondData = await secondCallRes.json()
+            const finalMalayalamAnswer = secondData?.choices?.[0]?.message?.content
+            if (finalMalayalamAnswer) {
+              return NextResponse.json({
+                answer: finalMalayalamAnswer,
+                actionExecuted: executedActions[0] || null,
+                executedActions,
+                model: 'GPT-4o (Live Function Calling & Analytics)',
+                timestamp: new Date().toISOString(),
+              })
+            }
+          }
+
+          return NextResponse.json({
+            answer: executedActions[0]?.messageMalayalam || 'ആക്ഷൻ വിജയകരമായി പൂർത്തിയായിട്ടുണ്ട്.',
+            actionExecuted: executedActions[0] || null,
+            executedActions,
+            model: 'GPT-4o (Function Calling Direct)',
+            timestamp: new Date().toISOString(),
+          })
+        }
+
+        const gptAnswer = message?.content
         if (gptAnswer) {
           return NextResponse.json({
             answer: gptAnswer,
@@ -59,8 +129,21 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (err) {
-      console.warn('[OpenAI Copilot Fallback]:', err)
+      console.warn('[OpenAI Function Calling Fallback]:', err)
     }
+  }
+
+  // Autonomous Backend Execution & Database Analytics Engine (Fallback/Standalone)
+  const voiceIntent = parseMalayalamVoiceIntent(prompt)
+  if (voiceIntent) {
+    const executedAction = await executeCRMToolCall(voiceIntent.toolName, voiceIntent.args)
+    return NextResponse.json({
+      answer: executedAction.messageMalayalam,
+      actionExecuted: executedAction,
+      executedActions: [executedAction],
+      model: 'Autonomous CRM Controller (Prisma Analytics)',
+      timestamp: new Date().toISOString(),
+    })
   }
 
   // Gather current lead & agent metrics

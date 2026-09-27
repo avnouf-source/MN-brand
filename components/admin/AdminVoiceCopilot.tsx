@@ -1,12 +1,39 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { Mic, MicOff, Volume2, VolumeX, Sparkles, X, Send, Bot, Loader2, Play, Square } from 'lucide-react'
+import {
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  X,
+  Send,
+  Bot,
+  Loader2,
+  Play,
+  Square,
+  Download,
+  CheckCircle2,
+  ArrowRightLeft,
+  FileText,
+  ShieldAlert,
+  Database,
+  Zap,
+} from 'lucide-react'
 
 interface Message {
   id: string
   role: 'admin' | 'copilot'
   content: string
   timestamp: string
+  actionExecuted?: {
+    toolName: string
+    success: boolean
+    actionSummary: string
+    messageMalayalam: string
+    data: any
+    timestamp: string
+  }
 }
 
 export function AdminVoiceCopilot() {
@@ -24,6 +51,7 @@ export function AdminVoiceCopilot() {
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [executingActionText, setExecutingActionText] = useState('വിവരങ്ങൾ പരിശോധിക്കുന്നു...')
   const [voiceMuted, setVoiceMuted] = useState(false)
 
   const recognitionRef = useRef<any>(null)
@@ -194,6 +222,20 @@ export function AdminVoiceCopilot() {
     window.speechSynthesis.speak(utterance)
   }
 
+  function downloadReportJSON(reportData: any) {
+    if (!reportData) return
+    const jsonStr = JSON.stringify(reportData, null, 2)
+    const blob = new Blob([jsonStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `B_Perfume_Executive_Report_${reportData.reportId || '2026'}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   async function handleSendMessage(overrideText?: string) {
     const queryText = (overrideText || input).trim()
     if (!queryText || isLoading) return
@@ -207,6 +249,40 @@ export function AdminVoiceCopilot() {
 
     setMessages(prev => [...prev, userMsg])
     if (!overrideText) setInput('')
+
+    // Set dynamic visual loading state based on the Malayalam command before API returns
+    const qLower = queryText.toLowerCase()
+    let actionLoadingLabel = 'CRM വിവരങ്ങൾ പരിശോധിക്കുന്നു...'
+    if (qLower.includes('റിപ്പോർട്ട്') || qLower.includes('report') || qLower.includes('pdf')) {
+      actionLoadingLabel = 'റിപ്പോർട്ട് തയ്യാറാക്കുന്നു...'
+    } else if (
+      qLower.includes('കൺവേർഷൻ') ||
+      qLower.includes('പെർഫോമൻസ്') ||
+      qLower.includes('കുറഞ്ഞ') ||
+      qLower.includes('കൂടുതൽ') ||
+      qLower.includes('conversion')
+    ) {
+      actionLoadingLabel = 'പെർഫോമൻസ് ഡാറ്റ പരിശോധിക്കുന്നു...'
+    } else if (
+      qLower.includes('റീഅസൈൻ') ||
+      qLower.includes('റീ-അസൈൻ') ||
+      qLower.includes('മാറ്റുക') ||
+      qLower.includes('നൽകുക') ||
+      qLower.includes('reassign')
+    ) {
+      actionLoadingLabel = 'ഡാറ്റാബേസിൽ ലീഡുകൾ റീ-അസൈൻ ചെയ്യുന്നു...'
+    } else if (
+      qLower.includes('ഇമ്പോർട്ടന്റ്') ||
+      qLower.includes('ഹോട്ട്') ||
+      qLower.includes('പെൻഡിങ്') ||
+      qLower.includes('pending')
+    ) {
+      actionLoadingLabel = 'പെൻഡിങ് വിഐപി ലീഡുകൾ പരിശോധിക്കുന്നു...'
+    } else if (qLower.includes('ബ്ലോക്ക്') || qLower.includes('ഡീആക്റ്റിവേറ്റ്') || qLower.includes('block')) {
+      actionLoadingLabel = 'യൂസർ അക്കൗണ്ട് സ്റ്റാറ്റസ് മാറ്റുന്നു...'
+    }
+
+    setExecutingActionText(actionLoadingLabel)
     setIsLoading(true)
 
     try {
@@ -225,6 +301,7 @@ export function AdminVoiceCopilot() {
           id: `copilot-${Date.now()}`,
           role: 'copilot',
           content: aiAnswer,
+          actionExecuted: data.actionExecuted || undefined,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
         setMessages(prev => [...prev, copilotMsg])
@@ -342,13 +419,14 @@ export function AdminVoiceCopilot() {
               </div>
             </div>
 
-            {/* Quick Prompt Pills in Natural Malayalam */}
+            {/* Quick Action Prompt Pills in Natural Malayalam */}
             <div className="px-4 py-2 bg-white/5 border-b border-white/10 flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar">
               {[
+                'ആദർശിന് 25 ലീഡുകൾ റീ-അസൈൻ ചെയ്യുക',
+                'കുറഞ്ഞ കൺവേർഷൻ ഉള്ള അഡ്വൈസർ ആര്?',
+                'എത്ര ഇമ്പോർട്ടന്റ് ലീഡുകൾ പെൻഡിങ് ആണ്?',
+                'ഈ ആഴ്ചയിലെ എക്സിക്യൂട്ടീവ് റിപ്പോർട്ട് തയ്യാറാക്കുക',
                 'ഈ മാസത്തെ വരുമാന പ്രവചനം',
-                'കൂടുതൽ കൺവേർഷൻ ഉള്ള അഡ്വൈസർ ആര്?',
-                '5,000 ലീഡുകളുടെ സ്റ്റാറ്റസ് വിവരങ്ങൾ',
-                'ശ്രദ്ധിക്കേണ്ട വിഐപി ക്ലയന്റുകൾ',
               ].map(q => (
                 <button
                   key={q}
@@ -369,12 +447,40 @@ export function AdminVoiceCopilot() {
                   className={`flex flex-col ${m.role === 'admin' ? 'items-end' : 'items-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed ${
+                    className={`max-w-[88%] rounded-2xl p-3.5 text-xs sm:text-sm leading-relaxed ${
                       m.role === 'admin'
                         ? 'bg-amber-500 text-slate-950 font-medium rounded-tr-xs shadow-md'
                         : 'bg-slate-800/90 text-slate-200 border border-white/10 rounded-tl-xs shadow-md'
                     }`}
                   >
+                    {/* Visual Action Execution Feedback Card */}
+                    {m.actionExecuted && (
+                      <div className="mb-2.5 p-3 rounded-xl bg-slate-950/85 border border-amber-400/30 shadow-inner text-left space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/25">
+                            <Zap size={10} className="text-amber-400" />
+                            {m.actionExecuted.toolName}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
+                            <CheckCircle2 size={11} /> പൂർത്തിയായി (Success)
+                          </span>
+                        </div>
+                        <p className="text-xs text-amber-100 font-mono">
+                          {m.actionExecuted.actionSummary}
+                        </p>
+                        {m.actionExecuted.toolName === 'generatePDFReport' && m.actionExecuted.data && (
+                          <button
+                            type="button"
+                            onClick={() => downloadReportJSON(m.actionExecuted?.data)}
+                            className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold shadow-md transition"
+                          >
+                            <Download size={13} />
+                            റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക (PDF/JSON)
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     <div className="whitespace-pre-wrap">{m.content}</div>
                     <div
                       className={`text-[9px] mt-1.5 flex items-center justify-end gap-1 ${
@@ -396,10 +502,18 @@ export function AdminVoiceCopilot() {
                 </div>
               ))}
 
+              {/* Dynamic Action Execution Visual Loading Feedback */}
               {isLoading && (
-                <div className="flex items-center gap-2 p-3 bg-slate-800/60 rounded-2xl border border-white/5 w-fit">
-                  <Loader2 size={14} className="animate-spin text-amber-400" />
-                  <span className="text-xs text-amber-200/80">വിവരങ്ങൾ പരിശോധിക്കുന്നു...</span>
+                <div className="flex items-center gap-3 p-3.5 bg-amber-400/10 border border-amber-400/30 rounded-2xl w-fit animate-pulse">
+                  <Loader2 size={16} className="animate-spin text-amber-400" />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-amber-200">
+                      {executingActionText}
+                    </span>
+                    <span className="text-[10px] text-amber-300/70">
+                      ഓട്ടോണമസ് സിസ്റ്റം കൺട്രോളർ പ്രവർത്തനം പുരോഗമിക്കുന്നു...
+                    </span>
+                  </div>
                 </div>
               )}
 
