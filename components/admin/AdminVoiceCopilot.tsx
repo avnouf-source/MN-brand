@@ -19,6 +19,8 @@ import {
   ShieldAlert,
   Database,
   Zap,
+  BarChart3,
+  TrendingUp,
 } from 'lucide-react'
 
 interface Message {
@@ -256,6 +258,14 @@ export function AdminVoiceCopilot() {
     if (qLower.includes('റിപ്പോർട്ട്') || qLower.includes('report') || qLower.includes('pdf')) {
       actionLoadingLabel = 'റിപ്പോർട്ട് തയ്യാറാക്കുന്നു...'
     } else if (
+      qLower.includes('ഗ്രാഫ്') ||
+      qLower.includes('ചാർട്ട്') ||
+      qLower.includes('graph') ||
+      qLower.includes('chart') ||
+      qLower.includes('ട്രെൻഡ്')
+    ) {
+      actionLoadingLabel = 'ലൈവ് ഗ്രാഫ് ഡാറ്റ ശേഖരിക്കുന്നു...'
+    } else if (
       qLower.includes('കൺവേർഷൻ') ||
       qLower.includes('പെർഫോമൻസ്') ||
       qLower.includes('കുറഞ്ഞ') ||
@@ -264,13 +274,15 @@ export function AdminVoiceCopilot() {
     ) {
       actionLoadingLabel = 'പെർഫോമൻസ് ഡാറ്റ പരിശോധിക്കുന്നു...'
     } else if (
+      qLower.includes('അസൈൻ') ||
       qLower.includes('റീഅസൈൻ') ||
       qLower.includes('റീ-അസൈൻ') ||
       qLower.includes('മാറ്റുക') ||
       qLower.includes('നൽകുക') ||
+      qLower.includes('assign') ||
       qLower.includes('reassign')
     ) {
-      actionLoadingLabel = 'ഡാറ്റാബേസിൽ ലീഡുകൾ റീ-അസൈൻ ചെയ്യുന്നു...'
+      actionLoadingLabel = 'ഡാറ്റാബേസിൽ ലീഡുകൾ അസൈൻ ചെയ്യുന്നു...'
     } else if (
       qLower.includes('ഇമ്പോർട്ടന്റ്') ||
       qLower.includes('ഹോട്ട്') ||
@@ -422,10 +434,11 @@ export function AdminVoiceCopilot() {
             {/* Quick Action Prompt Pills in Natural Malayalam */}
             <div className="px-4 py-2 bg-white/5 border-b border-white/10 flex items-center gap-1.5 overflow-x-auto text-[11px] no-scrollbar">
               {[
-                'ആദർശിന് 25 ലീഡുകൾ റീ-അസൈൻ ചെയ്യുക',
+                'ലൈവ് സെയിൽസ് ഗ്രാഫ് കാണിക്കുക',
+                'ആദർശിന് 25 ലീഡുകൾ അസൈൻ ചെയ്യുക',
+                'ഈ ആഴ്ചയിലെ എക്സിക്യൂട്ടീവ് റിപ്പോർട്ട് തയ്യാറാക്കുക',
                 'കുറഞ്ഞ കൺവേർഷൻ ഉള്ള അഡ്വൈസർ ആര്?',
                 'എത്ര ഇമ്പോർട്ടന്റ് ലീഡുകൾ പെൻഡിങ് ആണ്?',
-                'ഈ ആഴ്ചയിലെ എക്സിക്യൂട്ടീവ് റിപ്പോർട്ട് തയ്യാറാക്കുക',
                 'ഈ മാസത്തെ വരുമാന പ്രവചനം',
               ].map(q => (
                 <button
@@ -458,7 +471,15 @@ export function AdminVoiceCopilot() {
                       <div className="mb-2.5 p-3 rounded-xl bg-slate-950/85 border border-amber-400/30 shadow-inner text-left space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/25">
-                            <Zap size={10} className="text-amber-400" />
+                            {m.actionExecuted.toolName === 'fetchLiveGraphData' ? (
+                              <BarChart3 size={10} className="text-amber-400" />
+                            ) : m.actionExecuted.toolName === 'assignLeads' || m.actionExecuted.toolName === 'reassignLeads' ? (
+                              <ArrowRightLeft size={10} className="text-amber-400" />
+                            ) : m.actionExecuted.toolName === 'generatePDFReport' ? (
+                              <FileText size={10} className="text-amber-400" />
+                            ) : (
+                              <Zap size={10} className="text-amber-400" />
+                            )}
                             {m.actionExecuted.toolName}
                           </span>
                           <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-semibold">
@@ -468,15 +489,100 @@ export function AdminVoiceCopilot() {
                         <p className="text-xs text-amber-100 font-mono">
                           {m.actionExecuted.actionSummary}
                         </p>
+
+                        {/* Interactive Micro-Chart for fetchLiveGraphData */}
+                        {m.actionExecuted.toolName === 'fetchLiveGraphData' && m.actionExecuted.data?.points && (
+                          <div className="mt-2.5 p-3 rounded-xl bg-slate-900/90 border border-amber-400/25 space-y-2">
+                            <div className="flex items-center justify-between text-[11px] font-semibold text-amber-200">
+                              <span className="flex items-center gap-1.5 font-serif">
+                                <BarChart3 size={13} className="text-amber-400" />
+                                {m.actionExecuted.data.title || 'Live Telemetry'}
+                              </span>
+                              {m.actionExecuted.data.totalRevenueINR && (
+                                <span className="text-emerald-400 font-mono text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                                  ₹{m.actionExecuted.data.totalRevenueINR.toLocaleString()} INR
+                                </span>
+                              )}
+                              {m.actionExecuted.data.totalLeads && (
+                                <span className="text-sky-400 font-mono text-[10px] bg-sky-500/10 px-2 py-0.5 rounded-md border border-sky-500/20">
+                                  {m.actionExecuted.data.totalLeads.toLocaleString()} Leads
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Micro-bars representation */}
+                            <div className="space-y-1.5 pt-1">
+                              {m.actionExecuted.data.points.map((pt: any, idx: number) => {
+                                const maxVal = Math.max(...m.actionExecuted!.data.points.map((p: any) => p.value || p.orders || p.count || p.leads || 1))
+                                const currentVal = pt.value || pt.orders || pt.count || pt.leads || 0
+                                const pct = Math.min(100, Math.max(12, Math.round((currentVal / maxVal) * 100)))
+
+                                return (
+                                  <div key={idx} className="space-y-0.5">
+                                    <div className="flex items-center justify-between text-[10px]">
+                                      <span className="text-slate-300 font-medium">{pt.label}</span>
+                                      <span className="text-amber-300 font-mono">
+                                        {pt.value ? `₹${pt.value.toLocaleString()}` : pt.count ? `${pt.count} leads (${pt.percent}%)` : pt.orders ? `${pt.orders} orders` : pt.leads ? `${pt.leads} leads` : ''}
+                                      </span>
+                                    </div>
+                                    <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5">
+                                      <div
+                                        className="h-full rounded-full transition-all duration-500"
+                                        style={{
+                                          width: `${pct}%`,
+                                          background: pt.color || 'linear-gradient(90deg, #F59E0B 0%, #EAB308 100%)',
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+
+                            {m.actionExecuted.data.topDay && (
+                              <div className="pt-1 flex items-center gap-1.5 text-[10px] text-amber-300/90 font-medium">
+                                <TrendingUp size={11} className="text-emerald-400" />
+                                <span>Top Peak: {m.actionExecuted.data.topDay}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Allocation Badge for assignLeads & reassignLeads */}
+                        {(m.actionExecuted.toolName === 'assignLeads' || m.actionExecuted.toolName === 'reassignLeads') && m.actionExecuted.data && (
+                          <div className="mt-2 p-2.5 rounded-xl bg-slate-900/90 border border-amber-400/25 flex items-center justify-between text-[11px]">
+                            <div className="flex items-center gap-2">
+                              <ArrowRightLeft size={13} className="text-amber-400" />
+                              <span className="text-slate-300">Target Advisor: <strong className="text-white">{m.actionExecuted.data.targetAgent}</strong></span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2 py-0.5 rounded-md bg-amber-400/10 text-amber-300 font-mono text-[10px] border border-amber-400/30">
+                                +{m.actionExecuted.data.assignedCount || m.actionExecuted.data.count || 25} Leads
+                              </span>
+                              <span className="text-[10px] text-emerald-400 font-semibold">Allocated</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* PDF / JSON Report Action */}
                         {m.actionExecuted.toolName === 'generatePDFReport' && m.actionExecuted.data && (
-                          <button
-                            type="button"
-                            onClick={() => downloadReportJSON(m.actionExecuted?.data)}
-                            className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold shadow-md transition"
-                          >
-                            <Download size={13} />
-                            റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക (PDF/JSON)
-                          </button>
+                          <div className="mt-2 space-y-2">
+                            <div className="p-2.5 rounded-xl bg-slate-900/90 border border-amber-400/25 flex items-center justify-between text-[11px]">
+                              <div className="flex items-center gap-2">
+                                <FileText size={13} className="text-amber-400" />
+                                <span className="text-slate-300">Report: <strong className="text-white">{m.actionExecuted.data.reportId}</strong></span>
+                              </div>
+                              <span className="text-amber-300 text-[10px] font-mono">{m.actionExecuted.data.timeframe || 'this_week'}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => downloadReportJSON(m.actionExecuted?.data)}
+                              className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold shadow-md transition"
+                            >
+                              <Download size={13} />
+                              റിപ്പോർട്ട് ഡൗൺലോഡ് ചെയ്യുക (PDF/JSON)
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}
