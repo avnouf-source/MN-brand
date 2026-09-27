@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
+import { toast } from 'sonner'
 import { Plus, Search, Pencil, Trash2, Key, Loader2, Zap, Users, CheckCircle2, Download, Crown, Shield, Sparkles } from 'lucide-react'
 import { generate8PerfumeAgents } from '@/lib/bulk-generator'
 import { useDebounce } from '@/lib/hooks/useDebounce'
@@ -112,10 +113,12 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
                   pollData.message ||
                     `Successfully distributed ${leadTargetCount.toLocaleString()} leads equally across ${agents.length} advisors (${perAgent.toLocaleString()} leads each in 40 background batches).`
                 )
+                toast.success(`Successfully distributed ${leadTargetCount.toLocaleString()} leads across ${agents.length} advisors!`)
                 setTimeout(() => setDistributeProgress(null), 3000)
                 setTimeout(() => setDistributeMsg(''), 8000)
               } else if (pollData.status === 'FAILED') {
                 completed = true
+                toast.error('Distribution issue: ' + (pollData.error || 'Serverless error'))
                 setDistributeMsg('Distribution issue: ' + (pollData.error || 'Serverless error'))
                 setDistributeProgress(null)
               }
@@ -132,6 +135,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
             _count: { assignedLeads: perAgent },
           }))
         )
+        toast.success(`Equally distributed ${leadTargetCount.toLocaleString()} leads across ${agents.length} advisors.`)
         setDistributeMsg(
           data.message ||
             `Equally distributed ${leadTargetCount.toLocaleString()} Indian leads across ${agents.length} sales advisors (${perAgent.toLocaleString()} leads each).`
@@ -150,6 +154,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
   function handleReset8Advisors() {
     const list = generate8PerfumeAgents()
     setAgents(list)
+    toast.success('Roster reset to the 8 official B Perfume sales advisors.')
     setDistributeMsg('Reset roster to the 8 official B Perfume sales advisors.')
     setTimeout(() => setDistributeMsg(''), 5000)
   }
@@ -172,6 +177,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
       }
       setAgents(prev => [newAgent, ...prev])
     }
+    toast.success(`Advisor ${form.name} added successfully`)
     setModal(null)
     setForm({ name: '', email: '', department: '', password: '' })
     setLoading(false)
@@ -191,6 +197,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
     } catch {
       setAgents(prev => prev.map(x => x.id === selected.id ? { ...x, name: form.name, email: form.email, department: form.department } : x))
     }
+    toast.success(`Advisor ${form.name || selected.name} updated`)
     setModal(null)
     setLoading(false)
   }
@@ -201,6 +208,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
       await fetch('/api/agents', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
     } catch {}
     setAgents(prev => prev.filter(a => a.id !== id))
+    toast.success('Advisor removed from team roster')
   }
 
   async function handleReset() {
@@ -209,6 +217,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
     try {
       await fetch('/api/agents', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: selected.id, password: newPw }) })
     } catch {}
+    toast.success(`Password reset for ${selected.name}`)
     setModal(null)
     setNewPw('')
     setLoading(false)
@@ -233,6 +242,7 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    toast.success('Team roster CSV exported successfully')
   }
 
   return (

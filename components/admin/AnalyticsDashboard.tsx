@@ -1,6 +1,7 @@
 'use client'
 import { useState, useMemo, useCallback, memo } from 'react'
 import confetti from 'canvas-confetti'
+import { toast } from 'sonner'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import {
   BarChart,
@@ -287,6 +288,7 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
         payload.generateBenchmarkCount = 20000 // Default 20,000 benchmark
       }
 
+      const toastId = toast.loading('Processing round-robin distribution across 8 advisors...')
       const res = await fetch('/api/leads/import-bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -295,11 +297,12 @@ export const AnalyticsDashboard = memo(function AnalyticsDashboard({ stats, agen
       const data = await res.json()
       if (res.ok) {
         setImportResult(data)
+        toast.success(`Successfully routed ${data.totalLeads?.toLocaleString() || 'leads'} across active advisors!`, { id: toastId })
       } else {
-        alert(data.error || 'Failed to import leads')
+        toast.error(data.error || 'Failed to import leads', { id: toastId })
       }
     } catch (e: any) {
-      alert('Error during bulk routing: ' + e.message)
+      toast.error('Error during bulk routing: ' + (e.message || 'Unknown network error'))
     } finally {
       setBulkImporting(false)
     }
