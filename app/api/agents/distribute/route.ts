@@ -1,10 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import {
+  createDistributionJob,
+  getJob,
+  getLatestJob,
+  processSingleBatchStep,
+} from '@/lib/distribution-queue'
 
 export const dynamic = 'force-dynamic'
 
+// GET /api/agents/distribute?jobId=...
+// Fast polling endpoint for real-time progress tracking
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  const role = (session?.user as any)?.role
+  if (!session || (role !== 'ADMIN' && role !== 'SUB_ADMIN')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const { searchParams } = new URL(req.url)
+  const jobId = searchParams.get('jobId')
+
+  if (jobId) {
+    const job = getJob(jobId)
+    if (!job) {
+      return NextResponse.json({ error: 'Job not found', jobId }, { status: 404 })
+    }
+
+    const progressPercentage =
+      job.totalLeads > 0 ? Math.min(100, Math.round((job.processedLeads / job.totalLeads) * 100)) : 100
+
+    return NextResponse.json({
+      success: true,
+      jobId: job.id,
+      status: job.status,
+      totalLeads: job.totalLeads,
+      processedLeads: job.processedLeads,
+      batchSize: job.batchSize,
+      totalBatches: job.totalBatches,
+      completedBatches: job.completedBatches,
+      currentBatch: job.currentBatch,
+      progressPercentage,
+      leadsPerAgent: job.leadsPerAgent,
+      activeAgentsCount: job.activeAgentsCount,
+      agentAllocations: job.agentAllocations,
+      message: job.message,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      completedAt: job.completedAt,
+    })
+  }
+
+  // Return latest job if no ID passed
+  const latestJob = getLatestJob()
+  if (latestJob) {
+    return NextResponse.json({
+      success: true,
+      latestJob,
+    })
+  }
+
+  return NextResponse.json({
+    status: 'IDLE',
+    message: 'No active distribution jobs. Post to /api/agents/distribute to start 20,000 lead distribution.',
+  })
+}
+
+// POST /api/agents/distribute
+// Triggers asynchronous round-robin chunked lead distribution without timing out
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   const role = (session?.user as any)?.role
@@ -13,50 +77,65 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const [agents, leads] = await Promise.all([
-      prisma.user.findMany({ where: { role: 'AGENT' }, select: { id: true, name: true } }),
-      prisma.lead.findMany({ select: { id: true } }),
-    ])
+    let body: any = {}
+    try {
+      body = await req.json()
+    } catch {}
 
-    if (agents.length === 0) {
-      return NextResponse.json({ error: 'No sales advisors available for distribution' }, { status: 400 })
-    }
+    const totalLeads = Number(body.totalLeads) || 20000
+    const batchSize = Number(body.batchSize) || 500
 
-    // Partition leads equally in round-robin fashion
-    let updatedCount = 0
-    const updates = leads.map((lead: any, index: number) => {
-      const assignedAgent = agents[index % agents.length]
-      return prisma.lead.update({
-        where: { id: lead.id },
-        data: { assignedAgentId: assignedAgent.id },
+    // 1. Client-driven Step Chunk execution mode (optional manual stepping)
+    if (body.stepChunk && typeof body.batchIndex === 'number') {
+      const jobId = body.jobId || `dist-step-${Date.now()}`
+      const stepJob = await processSingleBatchStep(jobId, body.batchIndex, batchSize)
+      return NextResponse.json({
+        success: true,
+        mode: 'stepChunk',
+        jobId: stepJob.id,
+        status: stepJob.status,
+        batchIndex: body.batchIndex,
+        completedBatches: stepJob.completedBatches,
+        totalBatches: stepJob.totalBatches,
+        processedLeads: stepJob.processedLeads,
+        totalLeads: stepJob.totalLeads,
+        message: stepJob.message,
       })
-    })
-
-    // Execute in transaction chunks
-    const CHUNK_SIZE = 50
-    for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
-      const chunk = updates.slice(i, i + CHUNK_SIZE)
-      await prisma.$transaction(chunk)
-      updatedCount += chunk.length
     }
 
-    return NextResponse.json({
-      success: true,
-      totalLeads: leads.length,
-      totalAgents: agents.length,
-      leadsPerAgent: Math.ceil(leads.length / agents.length),
-      distributed: updatedCount,
-      message: `Equally partitioned ${leads.length} leads across ${agents.length} advisors (~${Math.ceil(leads.length / agents.length)} leads each).`,
+    // 2. Asynchronous Background Queue Mode (Default for 20,000 leads)
+    // Instantly returns 200/202 to avoid Vercel 504 FUNCTION_INVOCATION_TIMEOUT
+    const job = await createDistributionJob({
+      totalLeads,
+      batchSize,
+      requestedBy: (session.user as any)?.name || 'Admin',
     })
+
+    return NextResponse.json(
+      {
+        success: true,
+        status: 'PROCESSING',
+        jobId: job.id,
+        totalLeads: job.totalLeads,
+        batchSize: job.batchSize,
+        totalBatches: job.totalBatches,
+        processedLeads: 0,
+        progressPercentage: 0,
+        leadsPerAgent: job.leadsPerAgent,
+        activeAgentsCount: job.activeAgentsCount,
+        message: `Round-robin distribution of ${job.totalLeads.toLocaleString()} leads queued in ${job.totalBatches} batches (${job.batchSize} leads/batch). Vercel timeout prevented.`,
+        pollUrl: `/api/agents/distribute?jobId=${job.id}`,
+      },
+      { status: 202 }
+    )
   } catch (error: any) {
-    console.warn('[Distribute] DB transaction error, returning simulated distribution response:', error)
-    return NextResponse.json({
-      success: true,
-      simulated: true,
-      totalLeads: 5000,
-      totalAgents: 8,
-      leadsPerAgent: 625,
-      message: '5,000 Indian leads distributed equally across 8 B Perfume advisors (625 leads per advisor)',
-    })
+    console.error('[Distribute API Error]:', error)
+    return NextResponse.json(
+      {
+        error: 'Failed to initiate lead distribution',
+        details: error.message,
+      },
+      { status: 500 }
+    )
   }
 }

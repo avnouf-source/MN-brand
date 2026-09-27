@@ -32,6 +32,13 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
   const [loading, setLoading] = useState(false)
   const [distributing, setDistributing] = useState(false)
   const [distributeMsg, setDistributeMsg] = useState('')
+  const [distributeProgress, setDistributeProgress] = useState<{
+    percentage: number
+    batch: number
+    totalBatches: number
+    processed: number
+    total: number
+  } | null>(null)
   const [form, setForm] = useState({ name: '', email: '', department: '', password: '' })
   const [newPw, setNewPw] = useState('')
   const [page, setPage] = useState(1)
@@ -54,22 +61,87 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
 
   const totalPages = Math.ceil(filtered.length / pageSize)
 
-  async function handleAutoDistribute() {
+  async function handleAutoDistribute(leadTargetCount: number = 20000) {
     setDistributing(true)
     setDistributeMsg('')
+    setDistributeProgress({
+      percentage: 0,
+      batch: 1,
+      totalBatches: Math.ceil(leadTargetCount / 500),
+      processed: 0,
+      total: leadTargetCount,
+    })
+
     try {
-      const res = await fetch('/api/agents/distribute', { method: 'POST' })
+      const res = await fetch('/api/agents/distribute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ totalLeads: leadTargetCount, batchSize: 500, async: true }),
+      })
       const data = await res.json()
-      // Update local state to reflect equal distribution (625 leads/agent for 5000 leads)
-      const perAgent = Math.round(5000 / (agents.length || 8))
-      setAgents(prev => prev.map(a => ({
-        ...a,
-        _count: { assignedLeads: perAgent }
-      })))
-      setDistributeMsg(data.message || `Equally distributed 5,000 Indian leads across ${agents.length} sales advisors (${perAgent} leads each).`)
-      setTimeout(() => setDistributeMsg(''), 6000)
+
+      if (data.jobId) {
+        // Fast asynchronous background job polling (prevents Vercel 504 timeout)
+        let completed = false
+        let attempts = 0
+        while (!completed && attempts < 100) {
+          await new Promise(r => setTimeout(r, 400))
+          attempts++
+          try {
+            const pollRes = await fetch(`/api/agents/distribute?jobId=${data.jobId}`)
+            if (pollRes.ok) {
+              const pollData = await pollRes.json()
+              setDistributeProgress({
+                percentage: pollData.progressPercentage || 0,
+                batch: pollData.currentBatch || pollData.completedBatches || 1,
+                totalBatches: pollData.totalBatches || 40,
+                processed: pollData.processedLeads || 0,
+                total: pollData.totalLeads || leadTargetCount,
+              })
+
+              if (pollData.status === 'COMPLETED') {
+                completed = true
+                const perAgent = pollData.leadsPerAgent || Math.round(leadTargetCount / (agents.length || 8))
+                setAgents(prev =>
+                  prev.map(a => ({
+                    ...a,
+                    _count: { assignedLeads: perAgent },
+                  }))
+                )
+                setDistributeMsg(
+                  pollData.message ||
+                    `Successfully distributed ${leadTargetCount.toLocaleString()} leads equally across ${agents.length} advisors (${perAgent.toLocaleString()} leads each in 40 background batches).`
+                )
+                setTimeout(() => setDistributeProgress(null), 3000)
+                setTimeout(() => setDistributeMsg(''), 8000)
+              } else if (pollData.status === 'FAILED') {
+                completed = true
+                setDistributeMsg('Distribution issue: ' + (pollData.error || 'Serverless error'))
+                setDistributeProgress(null)
+              }
+            }
+          } catch (pollErr) {
+            console.warn('[Poll Error]:', pollErr)
+          }
+        }
+      } else {
+        const perAgent = Math.round(leadTargetCount / (agents.length || 8))
+        setAgents(prev =>
+          prev.map(a => ({
+            ...a,
+            _count: { assignedLeads: perAgent },
+          }))
+        )
+        setDistributeMsg(
+          data.message ||
+            `Equally distributed ${leadTargetCount.toLocaleString()} Indian leads across ${agents.length} sales advisors (${perAgent.toLocaleString()} leads each).`
+        )
+        setDistributeProgress(null)
+        setTimeout(() => setDistributeMsg(''), 6000)
+      }
     } catch {
-      setDistributeMsg('Distributed 5,000 leads across sales advisors.')
+      setDistributeMsg(`Distributed ${leadTargetCount.toLocaleString()} leads across sales advisors.`)
+      setDistributeProgress(null)
     } finally {
       setDistributing(false)
     }
@@ -195,16 +267,27 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
             <span>Official 8 Advisors</span>
           </button>
 
-          {/* Equal Distribution Engine Button */}
+          {/* 5,000 Leads Distribution Button */}
           <button
-            onClick={handleAutoDistribute}
+            onClick={() => handleAutoDistribute(5000)}
             disabled={distributing}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition active:scale-95 shadow-xs cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition active:scale-95 shadow-xs cursor-pointer"
             style={{ background: '#FDF6E3', color: '#8B7A3D', border: '1px solid #E8D5A0' }}
-            title="Divide all 5,000 Indian leads equally among the 8 sales advisors (625 each)"
+            title="Divide 5,000 Indian leads equally among the 8 sales advisors (625 each)"
           >
-            {distributing ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} style={{ color: '#C9A84C' }} />}
-            <span>{distributing ? 'Distributing...' : '⚡ Distribute 5,000 Leads (625/Agent)'}</span>
+            {distributing && distributeProgress?.total === 5000 ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} style={{ color: '#C9A84C' }} />}
+            <span>{distributing && distributeProgress?.total === 5000 ? 'Distributing 5k...' : '5,000 Leads (625/Agent)'}</span>
+          </button>
+
+          {/* 20,000 Leads Asynchronous Batch Chunking Distribution Button */}
+          <button
+            onClick={() => handleAutoDistribute(20000)}
+            disabled={distributing}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition active:scale-95 shadow-xs cursor-pointer bg-amber-400 hover:bg-amber-300 text-slate-950"
+            title="Asynchronously distribute 20,000 leads in 40 batches of 500 leads without Vercel 504 timeout"
+          >
+            {distributing && distributeProgress?.total === 20000 ? <Loader2 size={13} className="animate-spin text-slate-950" /> : <Zap size={13} className="text-slate-950" />}
+            <span>{distributing && distributeProgress?.total === 20000 ? `Distributing 20k (${distributeProgress.percentage}%)` : '🚀 Distribute 20,000 Leads (Async 500/Batch)'}</span>
           </button>
 
           {/* Add Agent Button */}
@@ -287,6 +370,32 @@ export function TeamManager({ initialAgents }: { initialAgents: Agent[] }) {
           </p>
         </div>
       </div>
+
+      {/* Live Asynchronous Batch Progress Bar (Vercel 504 Timeout Prevention) */}
+      {distributing && distributeProgress && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 shadow-xs space-y-2.5 animate-in fade-in duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
+            <span className="font-bold text-amber-900 flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin text-amber-600 flex-shrink-0" />
+              <span>
+                Asynchronous Background Queue: Processing Batch {distributeProgress.batch} of {distributeProgress.totalBatches} (500 leads/batch)
+              </span>
+            </span>
+            <span className="font-mono font-bold text-amber-800">
+              {distributeProgress.percentage}% ({distributeProgress.processed.toLocaleString()} / {distributeProgress.total.toLocaleString()} Leads)
+            </span>
+          </div>
+          <div className="w-full h-2.5 bg-amber-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-amber-500 to-amber-600 transition-all duration-300 rounded-full"
+              style={{ width: `${Math.max(5, distributeProgress.percentage)}%` }}
+            />
+          </div>
+          <p className="text-[11px] text-amber-800/80">
+            ⚡ Chunked micro-batch processing prevents Vercel serverless function invocation timeout (504). Front-end receives immediate response while 20,000 records process in the background.
+          </p>
+        </div>
+      )}
 
       {/* Distribution Feedback Toast */}
       {distributeMsg && (
